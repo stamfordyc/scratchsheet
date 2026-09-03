@@ -1,0 +1,1076 @@
+<!doctype html>
+<title>Yacht Scoring Scratch Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --paper:      #ffffff;
+    --paper-line: #dfe2e7;
+    --ink:        #142032;
+    --ink-soft:   #5c6572;
+    --ink-faint:  #8b929c;
+    --band:       #142032;
+    --class-fill: #eef1f5;
+    --accent:     #b5222a;
+    --accent-soft:#f2e2e1;
+    --warn:       #a5721e;
+    --warn-soft:  #f7eeda;
+    --phrf:       #142032;
+    --orc:        #1f6f6b;
+    --tot:        #8a5a1e;
+
+    --font-display: "Oswald", "Arial Narrow", sans-serif;
+    --font-body:    "IBM Plex Sans", "Segoe UI", sans-serif;
+    --font-mono:    "IBM Plex Mono", "Consolas", monospace;
+
+    /* the printed page this whole layout is engineered against */
+    --page-content-w: 7.4in;   /* 8.5in letter minus 0.55in side margins */
+    --page-content-h: 10in;    /* 11in letter minus 0.5in top/bottom margins */
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:#eef0f2;
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .sheet{
+    max-width:calc(var(--page-content-w) + 44px);
+    margin:0 auto;
+    padding:28px 22px 60px;
+    background:var(--paper);
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    border-bottom:3px solid var(--ink);
+    padding-bottom:12px;
+    margin-bottom:6px;
+  }
+  .masthead h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    font-size:26px;
+    margin:0 0 3px;
+    text-wrap:balance;
+  }
+  .masthead .subtitle{
+    font-size:13px;
+    color:var(--ink-soft);
+    letter-spacing:.01em;
+  }
+  .masthead .meta{
+    text-align:right;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    white-space:nowrap;
+  }
+  .masthead .meta strong{ color:var(--ink); }
+
+  .print-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+    padding:6px 13px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:3px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.02em;
+    cursor:pointer;
+  }
+  .print-btn:hover{ background:#98191f; }
+  .print-btn:disabled{ background:var(--ink-faint); cursor:default; }
+  .print-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+  .btn-row{ display:flex; gap:8px; margin-top:6px; justify-content:flex-end; }
+  .btn-row .print-btn{ margin-top:0; }
+  .csv-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 13px;
+    background:#fff;
+    color:var(--ink);
+    border:1.5px solid var(--ink);
+    border-radius:3px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.02em;
+    cursor:pointer;
+  }
+  .csv-btn:hover{ background:var(--class-fill); }
+  .csv-btn:disabled{ border-color:var(--ink-faint); color:var(--ink-faint); cursor:default; background:#fff; }
+  .csv-btn:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+  /* ---------- view toggle ---------- */
+  .view-toggle{
+    display:flex;
+    width:fit-content;
+    margin:4px 0 18px;
+    border:1.5px solid var(--ink);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .view-toggle button{
+    appearance:none;
+    border:none;
+    background:#fff;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.02em;
+    padding:7px 14px;
+    cursor:pointer;
+  }
+  .view-toggle button + button{ border-left:1.5px solid var(--ink); }
+  .view-toggle button[aria-pressed="true"]{ background:var(--ink); color:#fff; cursor:default; }
+  .view-toggle button:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+
+  .view-caption{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin:-8px 0 14px;
+  }
+
+  /* only one view renders at a time, on screen and in print alike */
+  #sheet-root[data-view="grouped"] #flat-view{ display:none; }
+  #sheet-root[data-view="flat"] #grouped-view{ display:none; }
+  #sheet-root[data-view="grouped"] .note-flat{ display:none; }
+  #sheet-root[data-view="flat"] .note-grouped{ display:none; }
+
+  /* ---------- loader ---------- */
+  .loader{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .loader label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+  }
+  .loader input{
+    width:100px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:5px 8px;
+    border:1.5px solid var(--ink-faint);
+    border-radius:3px;
+    color:var(--ink);
+  }
+  .loader input:focus-visible{ outline:2px solid var(--ink); outline-offset:1px; border-color:var(--ink); }
+  .loader button{
+    padding:6px 12px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:3px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:.02em;
+    cursor:pointer;
+  }
+  .loader button:hover{ background:#1f3350; }
+  .loader button:disabled{ background:var(--ink-faint); cursor:default; }
+
+  .status-line{
+    text-align:right;
+    font-size:11px;
+    margin-bottom:10px;
+    min-height:14px;
+  }
+  .status-line.is-error{
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:6px 10px;
+    border-radius:3px;
+    display:inline-block;
+    float:right;
+  }
+  .status-line.is-loading{ color:var(--ink-soft); }
+  .status-line::after{ content:""; display:block; clear:both; }
+
+  .empty-state{
+    margin:60px 0;
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:13px;
+  }
+
+  /* ---------- legend ---------- */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px 28px;
+    font-size:11px;
+    color:var(--ink-soft);
+    padding:10px 2px 18px;
+    border-bottom:1px solid var(--paper-line);
+    margin-bottom:22px;
+  }
+  .legend .item{ display:flex; align-items:center; gap:7px; }
+  .legend .pill-demo{ padding:1px 7px; border-radius:20px; font-weight:600; }
+
+  /* ---------- racing area band ---------- */
+  .area{ margin-bottom:26px; }
+  .area-band{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:14px;
+    background:var(--band);
+    color:#fff;
+    padding:8px 14px;
+    font-family:var(--font-display);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-size:14px;
+    font-weight:500;
+  }
+  .area-band .tag{ opacity:.65; font-size:10.5px; letter-spacing:.03em; }
+
+  .page-break-marker{
+    margin:20px 0;
+    padding-top:9px;
+    border-top:1.5px dashed var(--ink-faint);
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    text-align:center;
+  }
+
+  /* ---------- table ---------- */
+  table.roster{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:11.3px;
+  }
+  /* Fixed columns (check/num/sail/loa/rate) total 308px — rate is sized for a
+     two-value ORC rating ("489.3 / 548.5") so it never overflows past the
+     printable margin. The rest — name/type/owner/club/port — are percentages
+     of the table's own width, not of the leftover space, so they're scaled
+     to the ~57% that actually fits what remains of the 7.4in printable
+     width (710px - 308px = 402px). */
+  table.roster col.c-check { width:26px; }
+  table.roster col.c-num   { width:24px; }
+  table.roster col.c-sail  { width:98px; }
+  table.roster col.c-name  { width:13%; }
+  table.roster col.c-type  { width:10%; }
+  table.roster col.c-loa   { width:60px; }
+  table.roster col.c-owner { width:13%; }
+  table.roster col.c-club  { width:12%; }
+  table.roster col.c-port  { width:9%; }
+  table.roster col.c-rate  { width:100px; }
+
+  /* Flat (sail-number-sorted) table: checkbox+#+sail+flag+start are fixed
+     px, loa/rate as before, name/type/owner/club/port scaled to the ~46%
+     of the 7.4in printable width (710px) left over after the fixed columns
+     (26+24+90+40+40+60+100 = 380px; 710-380=330px → 46%). */
+  table.roster col.f-check { width:26px; }
+  table.roster col.f-num   { width:32px; } /* wider than the grouped table's — this list runs 1-82, not 1-10 */
+  table.roster col.f-sail  { width:84px; }
+  table.roster col.f-flag  { width:40px; }
+  table.roster col.f-start { width:40px; }
+  table.roster col.f-name  { width:11%; }
+  table.roster col.f-type  { width:7%; }
+  table.roster col.f-loa   { width:60px; }
+  table.roster col.f-owner { width:11%; }
+  table.roster col.f-club  { width:10%; }
+  table.roster col.f-port  { width:7%; }
+  table.roster col.f-rate  { width:100px; }
+
+  table.roster thead{ display:table-header-group; }
+  table.roster thead th{
+    text-align:left;
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:7px 8px 6px;
+    border-bottom:1px solid var(--ink);
+    background:var(--paper);
+  }
+  table.roster thead th.num{ text-align:center; }
+  table.roster thead th.check{ text-align:center; }
+  table.roster thead th.right{ text-align:right; }
+
+  /* one tbody per class — the atomic, never-split pagination unit */
+  table.roster tbody{ break-inside:avoid; page-break-inside:avoid; }
+  table.roster tr{ break-inside:avoid; page-break-inside:avoid; }
+  /* the flat table has one tbody holding every boat — only individual rows,
+     not the whole body, should refuse to split across a page */
+  table.roster.flat-roster tbody{ break-inside:auto; page-break-inside:auto; }
+
+  .flagcell{ text-align:center; }
+  .flagcell .flag-img{ margin:-2px auto; }
+  td.startnum{ text-align:center; font-family:var(--font-mono); font-weight:600; }
+
+  tr.class-row td{ padding:0; border:none; }
+  .class-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--class-fill);
+    padding:5px 8px;
+    border-top:1px solid var(--paper-line);
+    border-bottom:1px solid var(--paper-line);
+  }
+  .flag-img{
+    flex:none;
+    display:block;
+    height:22px;
+    width:auto;
+    margin:-2px 0;
+    border:1px solid var(--ink-faint);
+    background:#fff;
+  }
+  .class-bar .titles{ flex:1 1 auto; min-width:0; }
+  .class-bar .cname{
+    font-family:var(--font-display);
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink);
+    letter-spacing:.01em;
+  }
+  .class-bar .csub{
+    font-size:9.5px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:.045em;
+    margin-top:1px;
+  }
+  .class-bar .division-pill{
+    flex:none;
+    font-size:9.5px;
+    font-weight:600;
+    letter-spacing:.03em;
+    padding:2px 8px;
+    border-radius:20px;
+    border:1px solid currentColor;
+    white-space:nowrap;
+  }
+  .class-bar .boat-count{
+    flex:none;
+    font-size:10px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    min-width:56px;
+    text-align:right;
+  }
+
+  tr.boat-row td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--paper-line);
+    vertical-align:top;
+    overflow-wrap:break-word; /* a long unbroken token (club name, owner) wraps mid-word rather than overflowing a narrow column */
+  }
+  tbody:last-of-type tr.boat-row:last-child td{ border-bottom:1px solid var(--ink-faint); }
+
+  td.check{ text-align:center; }
+  .arrival-box{
+    display:inline-block;
+    width:15px; height:15px;
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    margin:0 auto;
+  }
+  td.num{ text-align:center; color:var(--ink-faint); font-family:var(--font-mono); white-space:nowrap; }
+  td.sail{ font-family:var(--font-mono); font-weight:600; font-size:14.5px; letter-spacing:.01em; }
+  td.name{ font-weight:600; }
+  td.type{ color:var(--ink-soft); }
+  td.loa{ font-family:var(--font-mono); color:var(--ink-soft); }
+  td.owner .crew{
+    display:block;
+    font-size:9.5px;
+    color:var(--ink-faint);
+    margin-top:1px;
+    font-family:var(--font-body);
+  }
+  td.club, td.port{ color:var(--ink-soft); }
+  td.rate{ font-family:var(--font-mono); font-weight:500; }
+  .rate-pending{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:9.5px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:var(--warn);
+    background:var(--warn-soft);
+    padding:2px 6px;
+    border-radius:20px;
+  }
+
+  /* on-screen cue for a class that a forced page break will push to a fresh page */
+  tbody.force-break > tr.class-row .class-bar{
+    border-top:2px dashed var(--ink-faint);
+    position:relative;
+  }
+  tbody.force-break > tr.class-row .class-bar::after{
+    content:"↧ starts a new printed page";
+    position:absolute;
+    right:8px;
+    top:-15px;
+    font-size:8.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--ink-faint);
+    background:var(--paper);
+    padding:0 4px;
+  }
+
+  footer.note{
+    margin-top:26px;
+    font-size:10.5px;
+    color:var(--ink-faint);
+    border-top:1px solid var(--paper-line);
+    padding-top:10px;
+  }
+
+  .no-print{}
+
+  @media print{
+    body{ background:#fff; }
+    .sheet{ max-width:none; padding:0; }
+    .no-print{ display:none !important; }
+    .page-break-marker{ display:none; }
+    tbody.force-break > tr.class-row .class-bar{ border-top:none; }
+    tbody.force-break > tr.class-row .class-bar::after{ content:none; }
+    .area.force-break,
+    tbody.force-break{ break-before:page; page-break-before:always; }
+    @page{ size:letter; margin:0.5in 0.55in; }
+  }
+</style>
+
+<div class="sheet" id="sheet-root" data-view="grouped">
+
+  <div class="masthead">
+    <div>
+      <h1 id="event-name">Scratch Sheet</h1>
+      <div class="subtitle" id="event-subtitle">Enter a YachtScoring Race ID to load boats by racing area &amp; starting sequence</div>
+    </div>
+    <div class="meta">
+      <form class="loader no-print" id="loader-form">
+        <label for="race-id">Race ID</label>
+        <input id="race-id" name="race-id" type="text" inputmode="numeric" autocomplete="off" value="50775">
+        <button type="submit" id="load-btn">Load</button>
+      </form>
+      <div class="status-line no-print" id="status-line"></div>
+      <div><strong id="boat-total">—</strong> boats &nbsp;·&nbsp; <strong id="area-total">—</strong> racing areas &nbsp;·&nbsp; <strong id="class-total">—</strong> classes</div>
+      <div class="btn-row no-print">
+        <button class="csv-btn" id="csv-btn" disabled>⬇ Export CSV</button>
+        <button class="print-btn" id="print-btn" onclick="window.print()" disabled>🖨 Print / Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend no-print">
+    <div class="item"><span class="arrival-box" style="margin:0"></span> Check off on arrival</div>
+    <div class="item"><img class="flag-img" style="margin:0" src="" data-legend-flag="One" alt="Numeral pennant One"> Start-sequence flag (from yachtscoring.com)</div>
+    <div class="item"><span class="pill-demo" style="border:1px solid #142032;color:#142032">PHRF</span><span class="pill-demo" style="border:1px solid #1f6f6b;color:#1f6f6b">ORC</span><span class="pill-demo" style="border:1px solid #8a5a1e;color:#8a5a1e">ToT</span> Rating system</div>
+    <div class="item"><span class="rate-pending" style="position:static">PENDING</span> Rating not yet approved — verify at check-in</div>
+  </div>
+
+  <div class="view-toggle no-print" role="group" aria-label="Report format">
+    <button type="button" id="view-grouped-btn" aria-pressed="true">Grouped by Area &amp; Class</button>
+    <button type="button" id="view-flat-btn" aria-pressed="false">Flat List — Sorted by Sail #</button>
+  </div>
+
+  <div id="grouped-view">
+    <div id="areas"></div>
+  </div>
+
+  <div id="flat-view">
+    <div class="view-caption">All boats in one list, sorted numerically by sail number.</div>
+    <div id="flat-table-wrap"></div>
+  </div>
+
+  <div class="empty-state no-print" id="empty-state">Enter a Race ID above and click Load.</div>
+
+  <footer class="note">
+    <span class="note-grouped">Column order: ✓ · # · Sail No. · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Home Port · Rating.
+    Each class is paginated as a single unbreakable block so no class is ever split across a printed page.</span>
+    <span class="note-flat">Column order: ✓ · # · Sail No. · Flag · Start · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Home Port · Rating.
+    Sail numbers are sorted on the digits parsed out of the source registration (a few entries — mixed formats like "5598T" or "RP 45" — sort on whichever digits they contain).</span>
+    Crew count shown under the owner's name for check-in verification. Start-sequence flags are the actual
+    numeral/letter-pennant PNGs embedded on the source page — <span id="source-note"></span>
+  </footer>
+
+</div>
+
+<script>
+/* ================================================================
+   Start-sequence / class flags — the actual PNGs (base64) embedded
+   on the yachtscoring.com scratch-sheet page, extracted from its
+   asset bundle. Covers every flag name the site can assign a class:
+   numeral pennants, the NATO alphabet pennants, Answer/Prompt/
+   Substitutes, and the solid-color flags.
+   ================================================================ */
+const FLAG_PNG = {
+  "Alpha": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUQAAADYAgMAAADuV3LZAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAADFBMVEXAwMD///8AAP8AAACfbIs7AAAAAXRSTlMAQObYZgAAAAFiS0dEAxEMTPIAAAAHdElNRQfmDA4LDQpwyLC/AAAB9klEQVR42tXcsQ3DMAwEwF8yTabhKF8SmTIruDgWzgAHBDEcSfxXPg8/39/DT7S4XCwXh4vR4nKxXBwuRovLxXJxuBgtLhfLxeFitLhcLBeHi9HicrFcHC5Gi8vFcnG4GC0uF8vF4WK0uFwsF4eL0eJysVwcLkaLy8VycbgYLS4Xy8XhYrS4XCwXh4vR4nKxXBwuRovLxXJxuBgtLhfLxeFitLhcLBeHi9HicrFcHC5Gi8vFcnG4GC0uF8vF4WK0uFwsF4eL0eJysVwcLkaLy8VycbgYLS4Xy8XhYrS4XCwXh4vR4nKxXBwuRovLxXJxXiD6b+1/Gf/0HDzh5aJ/U/i32cEbt1z0/1z+3/VgBVAu+pWUX+0drEjLRb+y97uPgx1Sueh3mn43fLBjLxf9yYc/nTk4QSoX/UmcPy08ONEsF/3JsD+9PjhhLxf9pMJPUw4mPuWin5z56d7BBLJc9JNcP20+mIiXiz5Z4NMPBwmNctEnXXwa5yAxVC765JVPhx0k2MpFnwT0acWDRGW56JOpPj17kPAtF31S2qe5DxLn5aJP7vt2wUEDolz0TRLfdjlo5JSLvtnk21cHDbFy0TftfBvwoLFYLvrmp2+nHjRoy0XfRPZt6YNGd7nom/G+vX9ww0BfcFODv03i4MYLfyuHvznk9wcni5ej3hV7HwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzoxMCswMDowMMYCSa8AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6MTArMDA6MDC3X/ETAAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjEwKzAwOjAw4ErQzAAAAABJRU5ErkJggg==",
+  "Bravo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUQAAADYAgMAAADuV3LZAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACVBMVEXAwMD/AADAwMCo6hpGAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAHdElNRQfmDA4LDSc1F+zKAAAB7klEQVR42tXcwQ3DMAwDQI6mEfhQ9l8lS5we7gAHFA1SWyadT3+iweViuThcjBaXi+XicDFaXC6Wi8PFaHG5WC4OF6PF5WK5OFyMFpeL5eJwMVpcLpaLw8VocblYLg4Xo8XlYrk4XIwWl4vl4nAxWlwulovDxWhxuVguDhejxeViuThcjBaXi+XicDFaXC6Wi8PFaHG5WC4OF6PF5WK5OFyMFpeL5eJwMVpcLpaLw8VocblYLg4Xo8XlYrk4XIwWl4vl4nAxWlwulovDxWhxuVguDhejxeViuThcjBaXi+XicDFaXC6Wi/OA6L+1/2X803PwhJeL/k3h32YHb9xy0f9z+X/XgxVAuehXUn61d7AiLRf9yt7vPg52SOWi32n63fDBjr1c9JMPP505mCCVi34S56eFBxPNctFPhv30+mDCXi76kwp/mnJw4lMu+pMzf7p3cAJZLvqTXH/afHAiXi76ZIFPPxwkNMpFn3TxaZyDxFC56JNXPh12kGArF30S0KcVDxKV5aJPpvr07EHCt1z0SWmf5j5InJeLPrnv2wUHDYhy0TdJfNvloJFTLvpmk29fHTTEykXftPNtwIPGYrnom5++nXrQoC0XfRPZt6UPGt3lom/G+/b+wQ0DfeCmBn+bxMGNF/5WDn9zyPcDLVMITIFAeskAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6MzgrMDA6MDC3yAC1AAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjM4KzAwOjAwxpW4CQAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzozOSswMDowMDf3kmIAAAAASUVORK5CYII=",
+  "Charlie": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAA//8AAP////UvLi4AAABHSURBVGje7dahAQAwCMAwTpzhv+ldyQuAXerjGyFJkiT1e/suDMMwDMMw/B3OfQeGYRiGYRiGJ9iswzAMwzAMwwMsSZIk9Sut/cvZ9jABggAAAABJRU5ErkJggg==",
+  "Delta": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACVBMVEX//wAAAP////8y3MOOAAAAAWJLR0QCZgt8ZAAAAAd0SU1FB+YMDgsNKKWo8VsAAAA8SURBVGje7cshEQAACAQwImLoX4UKfxjM5lcFAAC5uWtZlmVZlmVZlmVZlmVZlmVZlmVZlmVZ/s8AAJBbZ+Eb5dAQSXwAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6MzkrMDA6MDARvwsBAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjM5KzAwOjAwYOKzvQAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzo0MCswMDowMKiq3qgAAAAASUVORK5CYII=",
+  "Echo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACVBMVEUAAP//AAD////1Ly4uAAAAAWJLR0QCZgt8ZAAAAAd0SU1FB+YMDgsNKKWo8VsAAAA5SURBVGje7cshEQAACASwj4ihfxU6cAjE5pcAAAAAAADwRu+VLMuyLMuyLMuyLMuyLMuyLMuyfJoHMTpl7VDqXakAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6NDArMDA6MDCO4kfLAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjQwKzAwOjAw/7//dwAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzo0MCswMDowMKiq3qgAAAAASUVORK5CYII=",
+  "Foxtrot": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEX/////AADrWueTAAAAAWJLR0QAiAUdSAAAAAd0SU1FB+YMDgsbAmKLjVoAAAK+SURBVFjDjdnBcSshEEVRqViwJARCITQUmkKZEGaphcrYY4ygm+73rO2t+vWPkWagud3EJzxu6BOfMKcD5nzCXF4w1zfM7QvVe2soh9YQPLWGZLk1JCutIVltDclaQ7IfF5KFK/uyeOUnYiN4vrIPr1f2ZVf1Zb8uXxZ69mSxZ0+WevZkuWdPVnr2lrT27MF79eB/Lk8WR7ZlaWRblke2ZWVkW1ZHtmWj2rL7J5tLGma24HFmC55ntmRlZktWZ7Zks1qyxWXJwpp3WVzzLktrPhDbgpc17/C17jLh2mVBZi2LMmtZklnLssxaVmTWsiqzXlJZNVy5tCzqLGVJZynLOktZ0VnKqs5SpquU3bcsljTseYXHPa/wvOdVVva8yuqeV9leV5nhWmXByg/kWmXJynNJs5UnvFj5hVyLzHRNWbDzA7mmLNn5QK4pK3YesmrnN2J/4A57wKOXn8g1ZNnLJ3INWfXyG7n+ZK6ry4KfH4jd4cnPB3J1WfXzG7l+ZcB1yQLKD+S6ZAnlw1/O63Mi9gVH9QdOMvnHyX+NwMifhfxRyZKQBWVfBwB/8a8i+SKTnwH5EZGfIPsBu7LXfx4eLvz4z4OLPPbIQ5M9ch3ZeGA7svG4d2TjZUFeNeRFRV5z5CXJXrGmbL6gTdl8vZPNAdlakI0J2dawTZEBX7dUBvxcMtnOkc0g2UqSjSjbxm4yuQneZKfI25IeIpPtO9n8k6MDO3gomT62KNmpspIdKpMDFzmukcMeOSqyg6aQnVsWsmPL5IhMDtjkeE4O92w0sMCtwcICP41MhhpkJEIGKmQcw4Y5BbnoIOmzpIeZyRCLjMDIAI2N3wpy0dFfQi46diRDSzLyJANTNm7NyEVHvWRQTMbMZEhNRtxsQF7weD3j4XzCo31yMUCuFcilBLvSIBci5DqFXMaQqxx9EfQNJQigLcxM6OoAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6Mjc6MDIrMDA6MDANPp5jAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjI3OjAyKzAwOjAwfGMm3wAAAABJRU5ErkJggg==",
+  "Golf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAA////AFbedqEAAAA1SURBVFjD7cnBCQAwDAOxZP+d22IKGSLIr8Oqm1WWOIme+ifGGGOMMcYYY4wxxhhjjDHexw/fI5s18HP1OAAAAABJRU5ErkJggg==",
+  "Hotel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP///0EdNBEAAAAsSURBVFjD7ckxEQAACASg7x9anTWCByvppXJorbXWWmuttdZaa6211lrrnz3nVJs1B6L8RAAAAABJRU5ErkJggg==",
+  "India": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAAAP//AIjbcFAAAAEVSURBVFjD7ddBDoMgEIXhIS5YegSO4tHkaB6FI7hkYWxrDYHq4CtBE02GXfMlTdtY5h96HZ2JhIWFhYWFz2WrjtgR6QOmz8mzX9hkeVi4yTLR5t2n3xff02XYr2wy7FbWGbYrqwwTbT9bynPgnmUf2LA8Bm5ZdoE1y0PghmUbWLFMtPtmCc+Re4anyF05+8iG4TFyy7CLrMt5iNyUs42sGCba/6p/85xyX8pTyt3J7FM2J/OYcnsyu5T1k3hIuRG+Pz/3Wbv0L3jp5XHptVd3I9dNAzRq6uZY3QwFAxqM97p2AGECsgZFEUgqEGQg50AMgpQEIYoyFkQwSGgQ4CDfUfyD1QEsHmhtAUuPrIrCwsLCwjfjN5mMwrGMDTUnAAAAAElFTkSuQmCC",
+  "Juliet": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAA/////3vcmSwAAAApSURBVFjD7cmxCQAACAMw/79Z0A+cLSRrqgAAQsyltdZaa63/NABAiAX1L2cxwPCYwQAAAABJRU5ErkJggg==",
+  "Kilo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAACVBMVEX//wAAAP////8y3MOOAAAAAWJLR0QCZgt8ZAAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsUEvikgfEAAAABb3JOVAHPoneaAAAARklEQVRo3u3LMREAAAgEoLehi/2r2MAAHuwkl5pLR5ZlWZZlWZZlWZZlWZZlWZZlWZZlWZZlWZZlWZZlWZZlWZZlWZZ/5gWCt2Spce0eowAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToyMDoxNCswMDowMECYsL4AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MjA6MTIrMDA6MDBSFT04AAAAAElFTkSuQmCC",
+  "Lima": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEX//wAAAACLx9WPAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsUE4+jsWcAAAABb3JOVAHPoneaAAAANUlEQVRYw+3KsQ0AIBADsbD/ygiowwgvXxc5SbVutYMxxhhjjDHGo7n3+e4YY4wxxhhjPJofIGSayRASBmcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MjA6MTYrMDA6MDDXB6GXAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjIwOjE1KzAwOjAwl7IDtgAAAABJRU5ErkJggg==",
+  "Mike": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEX///8AAP94wDzzAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsSJ/hN4lQAAAABb3JOVAHPoneaAAADH0lEQVRYw5WZS27cMBBEaTjAbAL4AgZ8kQBzsQDW0XQUHUFLLYRR9CPZTVb6JdppHoZiiaS6WExpv56buJaUry+F54I/FJ4Kfig8Fvyu8FDwm8KpXoK+DP7u8WrwM5Ithc8GPyJdUtlg8FuoSyh7Ofwd6RLKFoe/Il1iSCeHH5FsIXxIkTKvq1O2NvgZ6eqUzQ3+iHR1ysYGv4e62iFN7RXKbpRVXaNSlnX9SJNSln/8mWalLDf5mRalLOv6lValLHfsd3oJZeW3NW1iSEuLOx564aU/OxbCi5odC2XlHzsWysrzdiyUld7uuFdWf9lxr6y2d+BOWe3NgTtlVcuBuyGtPxy4E16bO3AnvHbmwK0yc3/gVpl5TydulJmHnbhRZrp64kaZuT1xo8w0duJGmenKiZshNUJO7IXbuxN74batCztltqMXdsrszYWdMtvUhZ0y+4ov7JTZfl7YanEqL+zfhGnpxuZ5rh83Nr11Km5stLp3cGPTops6Nzb9ad5/M0p+9G5sl6wd+4zLE/3Mybgo8/Mu4yLHz9qMy5/8nM+4PNKvmIzbsnavt4w3XVoKHmRhKniUZa3gSRbFgmdZUgteZNkqeJXlfE267m0N3mRFrXhU5briSRX7imdlFSpeVDmueFU2peKXqvUVb8opGDwIn2HwKFyKwZPwOAYvwmYYvAr7tSblVTaBN+GALB56/2Tx2Lsvi6feu1k8987P4qV3VxavvUX5DwyNQ9dAGLwWeKnxkMCAwnSAyQRTESYyLIN4EcEShAUMyx8+HvDpgQ9X/NmDjyZ8cuGDDZ97KBZQaqBQxWUOiiSUWCjQUN7BHIC1iI0J2BowRWCpwJCBnQMzGFtJMKJgY8EEg4UGAw72PTb/sHWAjQdsW2DTA1sm2HDBdi3e7MFWETaasE2FTS5skWGDHW/PYXMP0QAECxBLQKgBkUgcqEAcA2EOREEQJEEMBSEWRGD/FqBB/AbhHUR/EBxC7AihJUSecWAKcSuEtRD1QlAMMTOE1HHEDQE5xOsQzkO0DwcDcKwQH0rAkQYciMBxChzGwFHO3w+C/gAkPFukaIy7LAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxODoyMCswMDowMLBttbsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTg6MjArMDA6MDDBMA0HAAAAAElFTkSuQmCC",
+  "November": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEUAAP////973JksAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsRLTO1WIkAAAABb3JOVAHPoneaAAAATUlEQVRYw+3XwQ3AIAgFUJygI3T/rRzBARptIjqCJx8X8nnhTIjIesasvuKb8QuMMcb4MGcfLcdlxbrXMMYY48PsQGOMMfYTYYwxvph/S02ayTBFJ9QAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTc6NDUrMDA6MDDVMcgWAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjE3OjQ0KzAwOjAwAht7HgAAAABJRU5ErkJggg==",
+  "Oscar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP//AGwf25wAAAFxSURBVFjDhc+5bQAwDARBl67SVApLUMhA0Dkz4G+46UT7sT9YmY+5zdf8zBl4mT0en8Vn8Vl8lgy8zNtc5mNu8zNn4GXe5jIfc5uv+Zkz8DaX+ZjbfM3PnIGXeZvL3OZrfuYMvMzbXOZjbvM1Z+Bl3uYyH3Obr/mZM/A2l/mY23zNz5yBl3mby9zma37mDLzM21zmY27zNWfgZd7mMh9zm6/5mTPwMpf5mNt8zc+cgZd5m8t8zNf8zBl4mbe5zMfc5mt+5l9n8Vl8Fp/FZ/FZfPaDM/Ayl/mY23zNz5yBl3mby3zM1/zMGXiZt7nMx9zma37mb2fxWXwWn8Vn8Vl89gdn4GXe5mNu8zU/cwZe5m0u8zG3+Zkz8DJvc5mPuc3X/MxfZ/FZfBafxWfxWXz2D2fgZd7mY27zNT9zBl7mbS7zMbf5mTPwMm9zmY+5zdf8zBl4m8t8zG2+5mfOwMu8zWVu8zU/cwZe5m0u8zG3+X4C117h2b3+Mc4AAAAASUVORK5CYII=",
+  "Papa": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAA/////3vcmSwAAAAtSURBVFjD7ckxDQAwCAAwHODfHU62GwWQ0L6NAIAN8jWltdZaa6211pcaAGZ82sVHR0ybA98AAAAASUVORK5CYII=",
+  "Quebec": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURf//AIrG9EUAAAAcSURBVFjD7cEBAQAAAIIg/69uSEABAAAAAADwaBooAAFCd+J4AAAAAElFTkSuQmCC",
+  "Romeo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP//AGwf25wAAABCSURBVFjD7dWxCQAgDADBgIX7b+RggoKNFpJOsLhvb4CP2JWxanEPY4wxxhh/yCOrY4wxxq/5qOYfwxhjjDHG//EEdD6SfyMYgPwAAAAASUVORK5CYII=",
+  "Sierra": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAA/////3vcmSwAAAA6SURBVFjD7dehEQAgEASx64T+u6OAnwGNQfKCrE0Fm3WrgjHGGL/hmaOBMcYYY4wxxj+xVcQYY9zDG+qv7ktFdnF7AAAAAElFTkSuQmCC",
+  "Tango": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAA//8AAP////UvLi4AAABGSURBVGje7ctBEQAABAAwJXV0UgpAArf9F3noreIiy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isy7Isyz/zAH9QzmHEjn1rAAAAAElFTkSuQmCC",
+  "Uniform": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP///0EdNBEAAAA1SURBVFjD7cqxDQAgEAOxsP/KCKjDCC9fFzlJtW61gzHGGGOMMcajuff57hhjjDHGGGM8mh8gZJrJEBIGZwAAAABJRU5ErkJggg==",
+  "Victor": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP///0EdNBEAAAMWSURBVFjDjZlLrtswDEUVpEAmBd4GCmQjBbKxAs9L81K8BA81EOz6b5KieJ5nyUlgXdHm5yql9XrP1TWm+3rVuBf4WeNO4EeNk7wqOin8bXFR+GNxVvgd6Urpy+JB4Vck2xHepUiZ1lUpKwZ/Il2VstHgr0hXpaw3+BnqsiFN9gplG2W5wu9Il1E2VPgV6TLKugo/Ql1K2eTg73Y4jfDs4HckWynrHfyMdCllKUXKJhd/R7qEsuzid6RLhFSGs6+F31/9SkMt/Jb9O42VMqHrT8qVMqHrbyqVMvGHf2mqlInblTRXyu7FPhbcWWW3rueCe6tM/H7Bow2pWMyCsxEu1vpZcDHC5ecFW2VyGxdslQldGzbKpJIVG2Xy1ysetDJ5rxXrkKqVrliHVEVwxZMKqdqlFc9KuNrjDXdSuHr2NqyUqV3YsFKm9nDDUpmOwIazipGUsWH5ld0Es1F6Czcsl6MDsGPxGuo3csdiK9QWHXhsZYMd51Yu2XFpZaIdT608tuO5lQUP3DVy6IH7RgY+8NBIYwfOjRx54NLIsCW1cvAs8NzI7ifu/Npw4t6vLCce/PR84tFP7ifOfmk4cfELy4lnv2pduHNr3oV7t2JeeHDLzoVHt2hdOLsl78LFLZgl+WV1Nnh2i/WNe68TuPHgldMbj14xvnH2SvmNi9cI3Hjy2ogbz14TInDntDAC904DJPDgdBECZ6dFEbi4Dc5P/w33hpWD7njXYM8hYhBveFrgWYMnNX7O4S2BdwzeUHi/ITtAboHMFOc1yIqQUyEjQz6HagC1JK5EUMegCkINhQoM9Ruqf9w7QOcBfQt0PdAzQccF/Vrc7UGvCJ0m9KnQ5UKPDB029Odxdw+zAUwWMJfAVAMzEUxU8TwG0xzMgjBJwhwKUyzMwPEEDfM3TO8w+4NzAL4DuBbgefzYMQG/Bdya2OsBpwh8JnCpwOMChwz8tdidA28PnEHwFcGVBE8THNHYTwU3FrxccILBRwYXGjxscMBj/xzcd/DuwfmHcwM4dYAzi/jEA85L4LQFzmrgpOdT413Zf0Rno7DJcFm9AAAAAElFTkSuQmCC",
+  "Whiskey": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAA//////8AAF9o/awAAABJSURBVGje7daxCQAgDADBDKkZ0iltBcFAwO6+v/4jJEmSpF6zbsAwDMMwDMPwjXMdwTAMwzAMw/BHbNZhGIZhGIbhCkuSJEnvNiT7wT2BOL4vAAAAAElFTkSuQmCC",
+  "Xray": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQAA/////3vcmSwAAAA+SURBVFjD7dWxCQAgEATB78zSbFxQMHlBMPWD2fCmgIuZjdj1c8EYY4wxxrVZkqS/3UfV3j+GMcYYY4wL8QK3fbiX2lmQ3wAAAABJRU5ErkJggg==",
+  "Yankee": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURf8AAP//AGwf25wAAANTSURBVFjDzZhNittAEIWfcUCbgC8w4IsEfLGAfbQ5yhzBSy+EHbUs1U/3q0cIWYxXjYqe9udXpf4YvNpnRvusy3tbHdbl5/7s0Z4d1+VXW07r0raEZ7e2PLXV08qf9mzdgrOd6FvOtgUXO9G3XPxLXu1L+parbQlfSHPBthx8y9G/kG05+hbHhsaGbaFc0FzQXNBc0FzQXNBckHGu5TrOH5DYPxF/vYHrA5LrFyTXb0iuGYrr0Mo117GVa65pKYs4z0tZxHlZyv34BezrUr6LPlzKgquVBVcrC67lieA6LWXBdV7KIs7LUpbjN6OO89DKPn4Be/8lt3YtuPZywRWanXFt5YprK3Ou614uXyvvchHnXqZxTlam2Kf8WnmMXH4K5XqXS653uX5dzpLrvSradC9XcW4PqzjjZTSM376HY9sxU3fTPfMxNde6p+Zaj6m5Xprrqdr0/SfrONc/Wce57qnGb9tDsb8711226T/H6ceU4xe4hlsit2nJBc0FzQXNBd2m0HFCxwk5fsG42PgF45oYFzQXNBc0FzQXVJsG46JxunHRON242PgF42LjF4zrwrjMuDiXGRfnMuPiXGZclMuNi7apGxeN042LxunGxcbPjYuOnxsX5zLj4lxmXJzLjItzmXFRLjcu2qZmXDxOM64+zkc2Ljp+blzdvFsLbM1ecCUhG7mSkI1cSchGriRkfZtes5DdxrdOFLIhziRkz5ErCtk8ckUhe4xcUcgI1/BDZq7hwO5tOkuuIGRjmyYhI3FGISNxRiG7E67+puu4gpCxWyLc4IzLb3DK5Tc45XJxoVwv1abxgv+qsOs4g7jcKq5q/KKQfXeu/xXnROKkXOX4/Q0XNBc0FzQXdJtCxwkdJ3KcgeuZjYtyQY5fMC7KBc0FzQXNBdmmblw0Tjcujo0UZ+C6Z+OiXGZcnMuMi3OZcXEuMy7OZcZFudy4aJxuXDRONy6KbcY1cN2ScXEuMy7OZcbFucy4OJcZF+cy46JcZlw8TjMuHqcZF8c24yq4duMquEZnSlyjMyWu0ZkS1+hMiWt0pnP6Z33vTCnO0Zky9uBMYfwm4kyZ6yXzUreEG1fJNThT5uqdqePqnSnHOTjTobvpZond38Gn7l6aJddr/gP3uL7cLQRI0QAAAABJRU5ErkJggg==",
+  "Zulu": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAgMAAACRozcBAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAMUExURQAAAP8AAAAA////AI8f9LMAAAOXSURBVGjepdE7cuQwDIRhuFiOGfk8vMImdOBoY5+qY5/KsY8wgXfnoZEokQAbEPK/qr+C5H/h+5YUjyESbn+vcYnGl2scRv9c4yj69+saR9GXexxE/9zjIPrrHkuQ/IhLjPyIc4z8iFOM/IglRl7iEiIvcQ6tXuIUWr3EElr9jEvgUWucIuRnLBHyGpcAeY1zgLzGKUBeYwms3uLiX73F2b96i5P7UU0sfnITZze5iZOb3MTiJrdx8ZLbOHvJbZy8q9tYvKt3cXGu3sXZ96h9nJzkXcztvihx9pH3cfKR97H4yIe4uMiHOLtWH+LkWn2IxbX6GBfHo7o4e8jHWDzkLi4OchdnB7mLk4PcxeJY3ceFX93HmV/dx4l+1CAWnjyIM00exIkmD2KhyaO4sORRnFnyKE7s6lEs7OphXMjVwzhzjxrHQpLHceHI4zhz5HGcOPI4Fo6sxIUiK3GmVitxolYrsVCrtTgTj1LjxJC1WBiyGheCrMaZIKtxIshqLARZj8t8tR7n+Wo9lvlqIy6zR1lxnpKNOE3JRixTshWXGdmK84xsxWm22oplttqM82S1GSf7UXYsE7IdF5tsx9km23GyyXYsNnkSF5M8ibO5ehKLuXoWl8uJOP+ciNPXifjlVPx5In79OBG/vZ+Ia43HL7V+hOO3Wt/Dca3mbkxW1/oZjF9v8UcwfrvF78G4VhuNGdlCY0a20JiRLTSmZAON6WpjN6arjd2Yr9Z3Y/Yo61mYk3U05mQdDYKsokGQVTQIsooGQVbRYFZraDCrtd1gVmu7QTxK3Q2KrDwLFFlBgyIraHDkMRoceYwGt3qMBrl6iAa5eogG9ShlN0jycDdI8nA3WPLoWWDJIzRY8ggNmjxAg149QINePUCDX92jwT5qhAZP7neDJ/e7wZP73XCQu2fBQe7QcJA7NDyrj2h4Vh/R8Kw+ouF4VIeGi3zYDRf5sBsu8mE3XOTDs+Aj79HwkfdoOFfv0HCu3qHhXL1Dw/WoAxpO8g4NL7ndDS+53Q0vud0NL7l9FtzkBg336gYN/+oNDf/qDQ3vo1o0/OQNDT95QyNAXncjQF53I0BedyOy+vksRFY/0YisfqLhf9SGRoi8oBEiL2iEyAsaIfKCRoz82I0Y+bEbsdWP3Qiuvj8LwdV3NEKPWtAIku9oRMk3NKLkGxpR8g2NKPmGRph83Y3w6utuhFdfdyO+ulZEH3W7v3FyrX/+A+DH5FwLzFGqAAAAAElFTkSuQmCC",
+  "Zero": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURf8AAP//AEdwTMEMZsMAAAADdFJOU///ANfKDUEAAAGjSURBVHja7dy7bcNAEEXRNUOXwipcgpNhwBJYhephlTYMG7KkXXI/cwkM8NTACW4gBjsv2Q7/bsls4QmzlSfMNp4AkTthdgEBdX8gmO5PBJHkhfBHMoR39yzh2z1PuHYvEY5JyoQbckQ4dT8mXLqfEB7dTwn7nHkipQuIMaSSSBNPpPTOEynNPNGZpI3oQlqJju7NRHv3DqK1exfRlqSTaEG6ifru/UR19xGisvsYUZVklKhIMkykt4Unzv7fXYjjTy4n4uiTy40of3L5EUXEkyh09yWy3b2JTHd/4iUJQDwnQYhHBCL+d8eIe3eQ+OtOEr9JWOIHoYnv7jxhHyJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESKuJrbwj13X+A+P4z8CX8M/yF/iH0ds4Q9VlvhHQ/EPuNbwx3RT/MPGOfyR6RT/4Df+8TV+Qs4fwscfJcCnFfCBCH7mIv7kCD6cgs+/8CM28QeF8FkkfNyJn6iKPxeGj57h0238AB0+o7ftMIEBlw0z8vOSO/y7fQGSt4K4tKjNigAAAABJRU5ErkJggg==",
+  "One": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAADFBMVEXAwMD/////AAAAAAClrSYGAAAAAXRSTlMAQObYZgAAAAFiS0dEAxEMTPIAAAAJcEhZcwAAAMgAAADIAGP6560AAAAHdElNRQfmDA4LES6qvAkzAAAAAW9yTlQBz6J3mgAAAllJREFUeNrt3EtuhDAQBFCOxhG8oLzgCL6Pj8DCfcpIUTJhwMzw6eqkiWubxZNSQZPB7e7Q0QMMfAIIfALo+QQVwSMGBK13zBP4BKcSgI5gHQNCu3dUE/iEaiUAHcGLGBBKveN1Ap/QqATvY0BcRXYR13rHzgQ+caF3HIgBcRI5RpzqHUcT+MTx3nEmBsQx5CRxpHecTuATu3vHpRgQuyoB6AiuJ/CJd71DJwbEq0oAOgLFBD6x0TuUY0BUKoF+Ap9YIuCk5xPz3mnET+8gJvCJLwTk9C+IJFJ0jI0fRPlMJhLyFR6RvonCIkZ5ZCIRMguHGOfERCHSnCgMIspTMoFIz0QhELKIPhGXRFYn0pIo6oSI6m+qQsQ1kZWJcU1MykRaE0WZENEtY03EGpFVibFGTN6IVCOKKiGi3PeKiHUi+yLGOjH5IlKdKIqEiPaf1C8QcYvInohxi5gaseexuPJg3JMQUX/2bknEbSI3ohHHiXGbmBrRiEY0ohHt86IRf49o/za3L2LKRPtq/6/e5NzjrZrF68d7vKe9xztzg8MFiyOSe5wlGRy6GRwdWhyAGhzjGhxGGxypWwwGGIw3GAxpWIyaGAzMGIz9WAwvGYxgWQySGYzDWQz1WYwmGgxYqqV3P+wa/A8e+x8CD+4H8gf/lyN69xdVBv+Xhvxf4AruL9MN/i829u4vmQ7+L/z6v3xNv0LOvwjvfykBfbUCfUEEf82F/5Uj9MUp9PUv/CU2/hcK0dci0Zc78VdU+V8XRl96Rl/dxl9A13Vkou/IBBEwWszIXy/JBroPM5uF+LtErHcAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTc6NDUrMDA6MDDVMcgWAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjE3OjQ0KzAwOjAwAht7HgAAAABJRU5ErkJggg==",
+  "Two": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAA/////0dwTMRwJkkAAAADdFJOU///ANfKDUEAAAJ2SURBVHja7dzbjYMwEAVQG4kf/mmCKlwCH7if1JMqdxXlBdjgx70jDbEbOIpvyC72zBhzJ6+bMabjE8YMfMKYiU8QkQ9hjABByn1FcHLfEIxIdgQeCRDo3IMENvcwAc09RgAjiRMw5IgA5X5MQHI/IRC5nxL1kSQQtZEkEXVIIlGTeypRkXs6UZx7DlEYSR5RhOQSBblnE/m5FxC5uRcReZEUEjlIMZGeezmRnHsNkZh7HZEUSS2REEk1cY4AiLPcIcRx7iDiKHcYEY8ER0QRJBHJHUsEc0cTgdzxxC4SArGNhEKsERLxnTuN+OROJF65M4lnJFzigbCJ/9wPiNH7hYpb/1iOSPjn4gnji6DtVe/fayZvE2+r+m9i5iZBS8P61XLsD8H5GH6z6PvE2KlxSyz0fcLvlN0TjvnccZ6+cU8s9CjQYdgQ4dhRoMMQIMYQsdDTxuZtw4TTRfRhYtZFjGFioX+hoF8pPmFjhNNE9DFibkTKY4F8MK5BeE9/9i5B2DjhGtEI4K8g7newEY1oRCN+nGh/khoBfhNr/za3FzEs0V7tf+ok5xqnahLHj9c4p73GmbnA5YLEFck17pIELt0Erg4lLkAFrnEFLqMFrtQlCgMEyhsEijQkSk0ECmYEyn4kipcESrAkCskEyuEkivokShMFCixh66hMFLIG9SW7nf7y6Ul9Kfugv61Af4vHoL7dptPf+jSpb0Pr9LcE6m/PHPS3yupvW6Y3X9NbyPmN8PqHEtBHK9AHRPDHXOgfOUIfnEIf/8IfYqN/oBB9LBJ9uBN/RJX+cWH0oWf00W38AXT0MXrTnUzQALHBjPzxknfyuv0BN6CsS+8enWsAAAAASUVORK5CYII=",
+  "Three": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAMUExURf8AAAAA/////0dwTETjiXoAAAAEdFJOU////wBAKqn0AAABoUlEQVR42u3cu20DMRBF0QGcOXFJchPEhlvK1mM6UAlSZ2vDsCFL2pX4mUtggMcGTnBTzjNb4Xc2sxeeMHvjCbMDT4DIhTAbQEDdrwim+w1BJLkj/JENwrv7JuHbfZtw7b5HOCbZJ9yQR4RT98eES/cnhEf3p4S9nngi5wFEH1JI5E+eyPnIEzmfeKIxSR3RhNQSDd2rifruDURt9yaiLkkjUYM0E+Xd24ni7j1EYfc+oihJL1GQpJvIHxNPpDTzREoLT6Q0gEgTT+winsROd19is7s3sdHdn7hLAhC3SRDiGoGI/90x4tIdJP66k8RvEpb4QWjiuztPpHcRIkSIECFChAgRIkSIECFChAgRIkSIECFChAgRIkSIECFChAgRIkSIECFChAgRown8m+gc/svuFP/79BL+K/sc/6wg/onHHP7cZop/+rSEP0Ob4p8Exj/PPMY/lY1/towfX+Mn5PwhfPxRAnxaAR+I4Gcu4k+O4MMp+PwLP2ITf1AIn0XCx534iar4c2H46Bk+3cYP0OEzeocVJjBg2DAjPy+5wu/8BWaoWUA+eO1XAAAAAElFTkSuQmCC",
+  "Four": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURf8AAP///0dwTB8JYDIAAAADdFJOU///ANfKDUEAAAGrSURBVHja7dzNTcNAEIbhkY97hyJcBUWwHCiBKlKPqwQhUEjin9ndeS2N+NzAc3gVHyLPZ7bAz8XMJp4wKzxhNvMEiFwJsxMIqPsNwXS/I4gkD0Q8skJEd18l7Jknnuo7T9T6wRNhyB5R6wlEfeOJGtD9kBhP4iBe7QRi7PfuJEbe815i4D3vJ7pfwS1EZ5I2ogtpJTq6NxPt3TuI1u5dRFuSTqIF6Sb83fsJd/cRwtl9jHAlGSUcSYaJYySAOOoeQux3DyL2uocR20niiE0kktjoHkusdo8mVrrHEw9JAOI+CULcIhDxtztGXLuDxG93kvhJwhLfCE18deeJjUeECBEiRIgQIULEfyEq/byIECFChAgRIkSIECFChAgRIkSIECFCBEXor2ARIkSIECFChAgRqQn8M9GS/pPdKf/n03P6T9lL/rOC/CceJf25zZT/9GlOf4Y25T8JzH+eWfKfyuY/W8aPr/ETcv4QPv8oAT6tgA9E8DMX+SdH8OEUfP6FH7HJPyiEzyLh4078RFX+uTB89AyfbuMH6PAZvXmBCQw4bZiRn5dc4OfyCcMxzx80Ax4pAAAAAElFTkSuQmCC",
+  "Five": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAADFBMVEXAwMD//wAAAP8AAAANWsELAAAAAXRSTlMAQObYZgAAAAFiS0dEAxEMTPIAAAAHdElNRQfmDA4LDSnSr8HNAAABq0lEQVR42u3cwW3DMBBEUZamEnTIXlKNS/ExYJUJgsBxYplacfdTNDBs4B3+lTvFCv7M3njCbOUJs4UnUMRubwCBdbf7t/IEk8QMR+zxDSCyu9vmW3kiNYkZjljjDSCSulv7rTyRkWSXiCdxEFHERcS6+4hQdy8R6O4nupMcITqRY0RX94OEvV95otYLT9Q6gDiGdBL1gydqdXfvJ9zdI4QzSYxwJQkSHiRM7HdPIPa6pxDt7klEK0kW0UDyiKfdM4kn3XOJze7ZxEaSdOIxCUD8RxDib3eIuO+OEb/dOeKWhCR+EJb47k4TX4YIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoSIwQT+TRT/7Ip/2eU/Hr/+J3D8Kzv+IZ8/K3j9Ew/8UAU/t+GPhkqBiUuBiWspLIEf0/EngQ5g8vPMvcphgj+V9QOzni07K/cT7sq9BH8I3wFMNkqwdArzDETwMxcRYI7JkSUqnD7/wo/YpACnDgqlAaeNO/ETVbnAGXNh+cDo6TZ+gA4CBo4BgsCgYUZ+XpIGyicjXxRMJlh3MgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzo0MCswMDowMI7iR8sAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6NDArMDA6MDD/v/93AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjQxKzAwOjAwDt3VHAAAAABJRU5ErkJggg==",
+  "Six": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAACVBMVEUAAAD///9HcExWRmx5AAAAA3RSTlP//wDXyg1BAAAB0klEQVR42u3cyW0DMRBEUcJHh+IonIR5YAiMQvFUlF4gQZZmOMOlvwEDVQm8w7+ymZLgXVJKLzyR0itPpPTGEyByJ1L6AwLq/kAw3Z8IIsmGiEd2iOjuu0Rs930itHuLCEzSJsKQIyKo+zER0v2EiOh+Sqwn6SBWk3QRa0gnsdK9l1jo3k9Mdx8hJpOMEVPIKDHRfZgY7z5BjHafIsaSTBIjyDTR332e6O6+QnR2XyO6kqwSHUmWiXMkgDjrHkIcdw8ijrqHEe0kcUQTiSQa3WOJ3e7RxE73eGKTBCCekyDEIwIRv7tjxL07SNy6k8Q1CUv8IDTx1Z0nPM/zPM/zPM/zPM/zPM/zuH3QezdhwoQJEyZMmDBhwoQJEyZMmDBhwoSJ/0rUC0yU78euMMAS+fbwGBPuz6epyoKJ8vCUHQYQIm/OCqjKGFEFE2X/UIWLEE7k9tEQVTmaqIKJcnKGxkWIInLHSSBVOYiogonSe2TKRVglRg5+YWCSqIKJIrFElmBi6pwfBsaIKpgoEktkCSbWPuuAgS6iCiaKxBJZgomgr3i4CKdEENAmisQSWYKJ6I+2uAgtIhrYEEViiSzBBPaNHhfhicCAG1EklsgSTAje5ROIDPdwnM2TIAAAAABJRU5ErkJggg==",
+  "Seven": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURf8AAP//AEdwTMEMZsMAAAADdFJOU///ANfKDUEAAAHPSURBVHja7dy5cQMxEERRFkyEgiiUBGQoBEXBeDpKHUUWRe5iF8d8Wd0JPOO7GFyq4F0vtb7zRK0fPFHrJ0+AyIOo9R8IqPsTwXR/IYgkGyIe2SGiu+8Ssd33idDuLSIwSZsIQ46IoO7HREj3EyKi+ymxnqSDWE3SRawhncRK915ioXs/Md19hJhMMkZMIaPERPdhYrz7BDHafYoYSzJJjCDTRH/3eaK7+wrR2X2N6EqySnQkWSbOkQDirHsIcdw9iDjqHka0k8QRTSSSaHSPJXa7RxM73eOJTRKAeE2CEM8IRPztjhGP7iBx704StyQs8YvQxHd3nqhvJkyYMGHChAkTJkyYMGHChAkTJkyYMEERnud5nud5nud5nud5nud5XmvlCgP557ErDLBEuj88xvZ4Pk1VFkzkp6fsMIAQaXNWQFXGiCKYyPuHKlyEcCK1j4aoytFEEUzkkzM0LkIUkTpOAqnKQUQRTOTeI1MuwioxcvALA5NEEUxkiSWSBBNT5/wwMEYUwUSWWCJJMLH2WQcMdBFFMJEllkgSTAR9xcNFOCWCgDaRJZZIEkxEf7TFRWgR0cCGyBJLJAkmsG/0uAgvBAbciSyxRJJgQvCuXwUW93BWCx6QAAAAAElFTkSuQmCC",
+  "Eight": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAADFBMVEXAwMD/////AAAAAAClrSYGAAAAAXRSTlMAQObYZgAAAAFiS0dEAxEMTPIAAAAHdElNRQfmDA4LDSpLppB3AAABwUlEQVR42u3cwVHDQAxG4S0tJfiAemCowqVwhK0ShmFCILEt7eqtHfJvA9/hTXzISCpW8Gf2xBNmE0+YnXgCRez8BhBYd7t8E08wScxwxK7fAMKeeeKlvvJErTNPJCLLRK0DiPrGEzWl+waRkWSTeO/+KTqI3t+7i+j7zvuIru+8l+j4BPuJ5iQRohGJEU3dg0RL9zAR795ARJM0ETGkkYh0byUC3dsJd/cewpmkj3Al6SQ8SDex3T2B2OqeQqx3TyLWkmQRK0gesdg9k1jonkvc7J5N3EiSTlwnAYi/CEL87g4Rl90x4qc7R5yTkMQ3whJf3Wni0xAhQoQIESJEiBDxyESl3yxChAgRIkSIECFChAgRIkSIECFChAgRFPE//qcVIUKECBEiRIgQ8bAEPiaKD7viI7v84PH9D4Hjo+z4QD6/VnD/Kx74ogq+bsMvDZUCE6cCE1MpLIEv0/ErgQ7g4OuZW5W7CX5V1g8cdW3ZWbmdcFduJfhF+AbgYEcJopXDRLxykODPXPQAxzg5MvcKu59/4Y/YpAC7HhRKA3Y77sSfqMoF9jgXlg+MPt3GH6CDgIHHAEFg0GFG/rwkDZQPvyyozPKOOdkAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6NDErMDA6MDAolUx/AAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjQxKzAwOjAwWcj0wwAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzo0MiswMDowMD81z4EAAAAASUVORK5CYII=",
+  "Nine": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYBAMAAAD2auLmAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEXAwMD///8AAAD/AAD//wAQQpdsAAAAAXRSTlMAQObYZgAAAAFiS0dEAmYLfGQAAAAJcEhZcwAAAMgAAADIAGP6560AAAAHdElNRQfmDA4LEhfelNL4AAAAAW9yTlQBz6J3mgAAAklJREFUeNrt3dltw0AMhGGWIHYQuAIDaWAf0n9NiYIg8CHLOvbgEP9UsB+GzzvmbvLxOVMCw5wMBuE6/CFTAoPiWflypgQGqTp8NVMCg4bDNyWDIXYdvicZDEHr8AOZEhiinZUfz5TAEKYOP50pgWF8HV4tGQzjzsprJ4NhQB3eKBkMPR3eNlMCg/vlksHwk48EhjkZDO0cfQ1tzqq7oUEdQwyV6xhlqFnHSEOtOgYbqjgCGE6fVRDDqTriGI7XEctwrI5whgOOkIadZxXWsKOOyIatdUQ3bKlDwPC2DhHDqkPI8PKstAzLdegZnuuQNDzUIWu4cUgb/s5K3TArMGDAgAEDBgwYMGDAgAEDBgwYMGDAgAEDBgwYMGDAgAEDBgwYMGDAgAEDBgwYahg+W+erdQoGDBgwYMCAAQMGDBgwYMCAAQMGDBgwYMCAAQMGDBgwYMCAAQMGDBgwYMCAAQOGX4FpG/7+PpU13PxBK2ko938B6xme/2TWMpTFv7GFDC//KBcxrP4VL2Ao7/7sj27Ysp0Q2VA2bliENezYEglpKPs2XcIZyv5tnViGYxtHcQzl8NZUEMOpza8AhmInM9hw+v2jDbW2CEcZitXLEEPlbc7uhmLV09fQZqu2n6HdZnAfQ7GW6WBovqHdWHDtsWXeEtBrU179/a0MV+sb6QJaGK42JNIFVDXY0MgeUD2DRYh0AScNFijSBRw0RHv/boPFjHQBuwwWOtIFbDLEf/8bg6lEuoAVg4lFuoAFg+L77wymG+kC/g2mnm8z1NAagj2S5wAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxODoyMCswMDowMLBttbsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTg6MjArMDA6MDDBMA0HAAAAAElFTkSuQmCC",
+  "Prompt": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAADYAgMAAAArJehIAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQCaAP//AEdwTDYDwrEAAAADdFJOU///ANfKDUEAAAJcSURBVHja1dzbbQJBDIXh0Uh5SSmpIkXEfnAFaCqLXGWkXIAFdpmL/0imgO/BR8DO2N5iHv/5LNIQVRhVGFURVQxRoxP7VYVRFVFj2bMamthFjUzsShVGVUSNK+1GDSvtVo1ib1RhVEXUmMTu1JDS3qvCqMKoiqjriT1UlxN7rAqjKqIusnvqWmK76lJi+6owqiLqQmmP1Hn2UJ1O7Fh9Z9SKqOUVUcsbohZGLYxaEXUisR51PLEutTBqRdRRtlMdTKxXHUusWy2MWhF1pLQD6gA7ovYnNqQWRq2I2lvaQbWztKNqYdTCqBVRexKbUDsSm1ELo1ZEfcrOqc8Sm1SfJDarFkatiHpY2nn1xRD14ISzogqjKqLuHh7X1L3SLqo77KoqjKqI+jCxdfVRaQNUYVRF1Hs2RL1LLEa9TSxIFUZVRN2WNkzdsHHqdWKBqjCqIuqltKHqubSx6h8brAqjKqL+JBaufpc2XhVGFUZVRBVDVDkh6kci9ZQmLc3zLcjz62J5frXz/Bu2NE8ZmufpraV5KrY8p408pzhLczrWPLcOLc1tjua5JWtpbh8tz61unttyS9OFqHm6O0gnCumaIR0+phuZp8uLdKSZ7nmeqQRkggKZ9mAmU/JM/CDTScgkFTP1lWeaDpn8Q6YUmYnKPJOqyFQtMwGcZ7IamQJHJtaZ6fo8WwvIhgWyDcJsrjihNkI1B1Rk04rZCnNCbYRqDqjMFqMTqhNqI1RzQGU2hJ1QG6EGof+w0c5s3zuhNkI1B1TkbRHMmy2cUBuhmgMq8yYWJ1Qn1Eao5oD6Bbitl8i/PGafAAAAAElFTkSuQmCC",
+  "Black": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQAAAACBiqPTAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QAAKqNIzIAAAAHdElNRQfmDA4LDSZCENxcAAAAC0lEQVQI12NggAAAAAgAAS8g3TEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6MzgrMDA6MDC3yAC1AAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjM4KzAwOjAwxpW4CQAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzozOCswMDowMJGAmdYAAAAASUVORK5CYII=",
+  "Blue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEUAAP8AAAB7Yr8+AAAAAWJLR0QB/wIt3gAAAAd0SU1FB+YMDgsNJkIQ3FwAAAALSURBVAjXY2CAAAAACAABLyDdMQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzozOCswMDowMLfIALUAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6MzgrMDA6MDDGlbgJAAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjM4KzAwOjAwkYCZ1gAAAABJRU5ErkJggg==",
+  "Blue_White": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAQMAAAAlhr+SAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEUAE3////+xxcJFAAAAAWJLR0QAiAUdSAAAAAd0SU1FB+YMDgsNJzUX7MoAAAAPSURBVAjXY2DABv7/wUQAkcUN3sePYGAAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTM6MzgrMDA6MDC3yAC1AAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjEzOjM4KzAwOjAwxpW4CQAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyMi0xMi0xNFQxMToxMzozOSswMDowMDf3kmIAAAAASUVORK5CYII=",
+  "Brown": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEVyOgQAAACHfiJ1AAAAAWJLR0QB/wIt3gAAAAd0SU1FB+YMDgsNJzUX7MoAAAALSURBVAjXY2CAAAAACAABLyDdMQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzozOSswMDowMBG/CwEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6MzkrMDA6MDBg4rO9AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjM5KzAwOjAwN/eSYgAAAABJRU5ErkJggg==",
+  "Burgundy": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEVTBBYAAACvj20VAAAAAWJLR0QB/wIt3gAAAAd0SU1FB+YMDgsNKKWo8VsAAAALSURBVAjXY2CAAAAACAABLyDdMQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzozOSswMDowMBG/CwEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6MzkrMDA6MDBg4rO9AAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjQwKzAwOjAwqKreqAAAAABJRU5ErkJggg==",
+  "Gray": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAAA1BMVEVmZmZ8VoIEAAAAC0lEQVQI12NggAAAAAgAAS8g3TEAAAAASUVORK5CYII=",
+  "Green_Neon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQqsCkiKovcAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Green": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQltCQEkqxsAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Green_Dark": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURQA5AKn+sGAAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Green_Pink": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQCvAPquru6pWAYAAAApSURBVFjD7clBDQAACASg65/ZTRsYQOFLAgAA8FhvSmuttdZaa61P9wCHnprJx9EYfwAAAABJRU5ErkJggg==",
+  "Green_White": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADYAQMAAADWA03RAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAGUExURQCvAP///1eul5oAAAApSURBVFjD7clBDQAACASg65/ZTRsYQOFLAgAA8FhvSmuttdZaa61P9wCHnprJx9EYfwAAAABJRU5ErkJggg==",
+  "LtBlue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEVdxPAAAACPhPpaAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsTA91VN8QAAAABb3JOVAHPoneaAAAAC0lEQVQI12NggAAAAAgAAS8g3TEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTk6MDIrMDA6MDCKFcjRAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjE5OjAxKzAwOjAwyqBq8AAAAABJRU5ErkJggg==",
+  "Lime": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEUA/wAAAABvA35DAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAAAyAAAAMgAY/rnrQAAAAd0SU1FB+YMDgsTAqpSB1IAAAABb3JOVAHPoneaAAAAC0lEQVQI12NggAAAAAgAAS8g3TEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjItMTItMTRUMTE6MTk6MDIrMDA6MDCKFcjRAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIyLTEyLTE0VDExOjE5OjAxKzAwOjAwyqBq8AAAAABJRU5ErkJggg==",
+  "Orange": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURf+AACJhkXwAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Orange_Black": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOAgMAAABiJsVCAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAAABgFAPFkHAWQDU0AAAAXSURBVAjXY1i1atUCBvxEaGhoAANeAADtPBOinYYEdQAAAABJRU5ErkJggg==",
+  "Pink": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEX5zNAAAACdS01dAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAABLAAAASwAc4jpUgAAAAd0SU1FB+YMDRchOx+uLtEAAAALSURBVAjXY2CAAAAACAABLyDdMQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQwNTozMzo1OS0wNjowMCE4jGYAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMDU6MzM6NTktMDY6MDBQZTTaAAAAAElFTkSuQmCC",
+  "Plum": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABlBMVEWORYUAAADLSV1XAAAAAWJLR0QB/wIt3gAAAAlwSFlzAAABLAAAASwAc4jpUgAAAAd0SU1FB+YMDRciAIWIlDYAAAALSURBVAjXY2CAAAAACAABLyDdMQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQwNTozNDowMC0wNjowMB6c3KgAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMDU6MzQ6MDAtMDY6MDBvwWQUAAAAAElFTkSuQmCC",
+  "Purple": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURYwA/2JXMLMAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Red": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURf8AABniCTcAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Raspberry": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExUReQDXTdmOywAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Seagreen": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURTm0crJimGkAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Tan": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURdO1jSIOE9MAAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Turquoise": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURT7h0T8+1a8AAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "White": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAAA1BMVEX///+nxBvIAAAAC0lEQVQI12NggAAAAAgAAS8g3TEAAAAASUVORK5CYII=",
+  "Yellow": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAEAQMAAACTPww9AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAADUExURfz8AKOtGd8AAAALSURBVAjXY2CAAAAACAABLyDdMQAAAABJRU5ErkJggg==",
+  "Answer Pennant": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYUAAADYAgMAAAB5KhdGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAADFBMVEXAwMD/AAD///8AAAAFsautAAAAAXRSTlMAQObYZgAAAAFiS0dEAxEMTPIAAAAHdElNRQfmDA4LDSZCENxcAAABvUlEQVR42u3csW0DMQyFYY12I7gIe9ee4kZxGWvKBIHhOLF9R0r8dWfgaYGveADVkK9YwZ/ZB0+YHXjCbOIJFLHbG0Bgudv9O/AEE4kZjtjjG0CcPnmi1jNP1DrzRCLymqh1AFFzcl8kcnJfITIiWSX6I3EQvYiL6MvdR1x65ryX6BjBfqJ5BEeIRiRGNP3vQaLlfw8T8dwbiGgkTUQMaSQiubcSZkeeOHnnfA/hHMF9hGsEdxIepJtY/98TiLX/PYVYzj2JWIoki1hA8oiXuWcS9TLxxNMRnE08GcHpxOPXCxD/EYT4+79DxH3uGPGbO0fcIiGJK8ISP7nTxLchQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhQoQIESJEiBAhYjCBr4niy674yi6/ePz+S+D4Kju+kM+fFbz/iQd+qIKf2/BHQ6XAxFxg4lwKS+DHdPxJoAPY+Xnm0Qfs+VTWD+z1bHmKCTs8IecP4RuAnZUSRFMOE/GUgwRfc9ED7KNyZO4VNq9/4UtsUoBNC4XSgM3KnfiKqlxgi7qwfGB0dRtfQAcBA8sAQWBQMSNfL0kD5QutrKFVmC9UzwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0xMi0xNFQxMToxMzozNyswMDowMEGAcFwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMTItMTRUMTE6MTM6MzcrMDA6MDAw3cjgAAAAKHRFWHRkYXRlOnRpbWVzdGFtcAAyMDIyLTEyLTE0VDExOjEzOjM4KzAwOjAwkYCZ1gAAAABJRU5ErkJggg==",
+  "Substitute 1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAADYAgMAAAArJehIAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURf8AAP///0dwTB8JYDIAAAADdFJOU///ANfKDUEAAAJbSURBVHja1dzLbcNADEVRYpbaZ5MSpp6QC1VgqLKAVQbIx7as/wxvAKaAs+CDHWnm0TJ4/N+nSEVUYVRh1IKoMiBqdGK/qjBqQdRY9q6GJvZQIxN7UoVRC6LGjXamho12rkaxL6owakHUmMQWashol6owqjBqQdT+xFbV7sTWVWHUgqid7Jbal9im2pXYtiqMWhC1Y7R7aju7qzYntq8KoxZEbRztkdo22kNVGFUYtSBqQ2Jn1OuJnVKFUQuiXmVPqhcTO6teS+y0KoxaEPXKaC+o8o6obxOiKqMaouqIqDohqjKqMqoh6pnEGtQTibWoyqiGqIdsm3qUWKN6kFirqoxqiLo72nZ1j+1QdxLrUZVRDVE3R9unbo22U91ge1VlVEPU1cT61bXRBqjKqIaoSzZEXSQWo74mFqQqoxqizkcbps7YOPU5sUBVGdUQ9THaUPU+2lj1jw1WlVENUX8SC1e/RxuvKqMqoxqi6oioekPUj0TqLU1aludTkOfbZczzrZ3nv+GU5inD8jy9TWmeisc8bxt53uLGNG/HlufUYUpzmmN5TsmmNKePY55T3Tyn5WOaWwjLc7uD3EQht2bIDR9zG5nnlhe5kWZuz/O0EpAGBdL2YJopeRo/SDsJaVIxra88bTqk+Ye0FJlGZZ6mKtKqZRrAeZrVSAscaawz7fo8WwvIhgWyDcJsrjihVkIdHFCRTStmK8wJtRLq4IDKbDE6oTqhVkIdHFCZDWEn1EqoQeg/bLQz2/dOqJVQBwdU5NcimF+2cEKthDo4oDK/xOKE6oRaCXVwQP0CbKKGbZWdPu8AAAAASUVORK5CYII=",
+  "Substitute 2": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAADYAgMAAAArJehIAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURQAA////AEdwTBp1ILgAAAADdFJOU///ANfKDUEAAALQSURBVHjazdzLUQMxEEVRlZaKhFIUhMDCzpHqKMFgmxl7JPXvuiCAs3gPz0dqTWmS//dZSkfUwqiFUSuiloao2Y1d1cKoFVFz2bua2tifmtnYRi2MWhE1L9qdmhbtXs1iH9TCqBVRcxp7UlOifVYLoxZGrYgab+xQDTd2rBZGrYgaZEdqrLGhGmpsrBZGrYgaiHam+tmp6m5srha3+jFTq1c9v+dH+62e86O9qKf0aC9qPvujnrMb+1WzG7uqyY3d1Nxob2putHd1Hm31qpmNbdTExrZqXmNbNa+xnZoW7V6dR9u8alJjj2pOY49qTmNPakpjz2pGtAdqQrQHagJ7pMYbO1TDjR2r0cYGajDagRqMdqTG2KEaamysRhqbqIHGJmog2pnqj3aqum84c9Xb2EJ1NrZQnY2tVF9jS9UV7Vo9Odi16mlMoToa06j2xlSquTGdao1Wp1qjVapGVqvaGlOrpsb0qqUxvWqJ1qAaorWo+huOSVU3ZlO1jdlUbWNGVdmYVdVFa1ZVNxyzqmrMrmoac6iKxjzqujGXuozWpc6jLV511ZhTXTTmVeeNvXnVeWP/S0USQNpC/rOQXwHzi0WuLsiVELlqI3cY5m6I3LmRpwzkiYh5ekOeNJGnYuQJHnnbYN6MkLc45I0TeTtG3uSZVQdkhQRZzUFWnpBVMmZFD1l9RFZKkVVdZgUaWS1HVvaRXQhkx4TZ3UF2opBdM2SHD9mNZHZOkV1eZEca2T1HdvqZqQRkggKZ9kAmU5gpGmTiB5lOQiapkKkvZkINmaZDJv+QKUVkopKZ/kQmVZGpWmQCGJlWZiarkSlwZGKdma5nTgK8/NQCcsICOQ3CnFwRQu2E2gRQkZNWzKkwIdROqE0AlTnFKIQqhNoJtQmgMieEhVA7oSahLzjRzpy+F0LthNoEUJGvRTBfthBC7YTaBFCZL7EIoQqhdkJtAqhfEgW5azE3RP8AAAAASUVORK5CYII=",
+  "Substitute 3": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAADYAgMAAAArJehIAAAACVBMVEUAAAD///9HcExWRmx5AAAAA3RSTlP//wDXyg1BAAACW0lEQVR42uXcyY3DMAyFYUFHVRK4H+qgElTZgFUOMEsSx5sW/sEQ4wK+Ax/i2CLpUNT++ghSEVUYVRg1I6oURLVO7EcVRs2IasveVdPEHqplYk+qMGpGVLvSrlSz0q5VK/ZFFUbNiGqT2EY1Ke1WFUYVRs2IOp/Yrjqd2L4qjJoRdZI9UucSO1SnEjtWhVEzok6U9kwdZ0/V4cTOVWHUjKiDpb1Sx0p7qQqjCqNmRB1IrEXtT6xJFUbNiNrLNqqdibWqfYk1q8KoGVF7StuhdrA9antiXaowakbU1tJ2qo2l7VWFUYVRM6K2JDagNiQ2ogqjZkS9ZMfUq8QG1YvERlVh1Iyop6X9CMNXQtSwIGpg1Iioh6WdU49KO6kesLNqYNSIqLuJzat7pTVQA6NGRN2yJuomMRv1NTEjNTBqRNR1ac3UFWunPidmqAZGjYj6KK2pei+trfrLGquBUSOifidmrn6V1l4NjBoYNSJqSIgabuG/Xzc3aUU/vwI/d5fk567t599wcfOUEf08vS1unoqTn7cNP29xyc3bcfRz6rC4Oc2Jfk7JFjenj8nPqa6f0/L0/i7En+qY+OlEIV0zpMPHdCP9dHmRjjTTPfczlYBMUCDTHsxkip+JH2Q6CZmkYqa+/EzTIZN/yJQiM1HpZ1IVmaplJoD9TFYjU+DIxDozXe9nawHZsEC2QZjNFSXUSqhFARXZtGK2wpRQK6EWBVRmi1EJVQm1EmpRQGU2hJVQK6EaoW/YaGe275VQK6EWBVTkaxHMly2UUCuhFgVU5kssSqhKqJVQiwLqJytR4UOZlOSnAAAAAElFTkSuQmCC",
+  "Substitute 4": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVMAAADYAgMAAAArJehIAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJUExURf8AAP//AEdwTMEMZsMAAAADdFJOU///ANfKDUEAAAJSSURBVHja1dxbbsMwDETRAT+1kkD76R4LrrJAH0kcW7YevEGZBZwPDpra0jAqHv/5lCqiilHFqIaoKogandivKkY1RI1l72poYg81MrEnVYxqiBo32o0aNtqtGsW+qGJUQ9SYxHZqyGj3qhhVjGqIup7Yobqc2LEqRjVEXWRb6lpiTXUpsbYqRjVEXRjtmTrPnqrTiZ2rYlRD1MnRXqlzo71UxahiVEPUicR61PHEulQxqiHqKNupDibWq44l1q2KUQ1RR0Y7oA6wI2p/YkOqGNUQtXe0g2rnaEdVMaoY1RC1J7EJtSOxGVWMaoh6yc6pV4lNqheJzapiVEPU09F+6mP3WWcX1JPEVlQxqiFqc7Rramu0i2qDXVXFqIaoh4mtq0ejDVDFqIaoezZE3SUWo74mFqSKUQ1Rt6MNUzdsnPqcWKAqRjVEfYw2VL2PNlb9Y4NVMaoh6k9i4er3aONVMaoY1RBVBVF1Q1QlUm9p0rI8fwV5vl1Knm/tPP8Na5qnDMvz9FbTPBWXPG8bed7iSpq3Y8tz6lDTnOZYnlOymub0seQ51c1zWl7efwvxr25M8txEIbdmyA0fcxuZ55YXuZFmbs/ztBKQBgXS9mCaKXkaP0g7CWlSMa2vPG06pPmHtBSZRmWepirSqmUawHma1UgLHGmsM+36PFsLyIYFsg3CbK44oVZCLQ6oyKYVsxXmhFoJtTigMluMTqhOqJVQiwMqsyHshFoJNQh9w0Y7s33vhFoJtTigIr8WwfyyhRNqJdTigMr8EosTqhNqJdTigPoFOggsTJDtfPEAAAAASUVORK5CYII="
+};
+
+/* ================================================================
+   Rating formatting — mirrors yachtscoring.com's own per-division
+   display rules (PHRF/IRC/HPR/CRF/ORC/ORR/ORRez/Transpac/CSA/
+   GLMRA/ToT/Portsmouth), pulled from its scratch-sheet component.
+   ================================================================ */
+let currentModel = null;  // last successfully loaded model, used by the CSV export
+let currentRaceId = null; // its Race ID, appended to the CSV filename
+
+const DIVISION_COLOR = { PHRF:"var(--phrf)", ORC:"var(--orc)", ToT:"var(--tot)" };
+const DIVISION_LABEL = {
+  PHRF:"PHRF", IRC:"IRC", HPR:"HPR", CRFMkII:"CRF", ORC:"ORC (APHD/GPH)",
+  ORR:"ORR (GPH)", ORRez:"ORRez (ToD)", Transpac:"Transpac (CSA)", CSA:"CSA",
+  GLMRA:"GLMRA", ToT:"ToT", Portsmouth:"Portsmouth"
+};
+const IRC_OTHER = { S:"Std.", E:"End." };
+
+function findRating(ratings, type){ return ratings.find(r => r.ratingType === type); }
+function fmtNum(v, d){ return v == null ? "" : Number(v).toFixed(d); }
+
+function simpleRatingText(ratings, type, decimals){
+  const r = findRating(ratings, type);
+  if (!r) return null;
+  const val = fmtNum(r.value, decimals);
+  let other = r.otherValue || "";
+  if (type === "Rating_IRC") other = IRC_OTHER[other] ?? other;
+  return other ? `${val} ${other}`.trim() : val;
+}
+
+function ratingText(division, ratings, approved){
+  if (!approved) return null; // matches the source site: unapproved ratings are withheld publicly
+  switch (division){
+    case "PHRF": return simpleRatingText(ratings, "Rating_PHRF", 0);
+    case "IRC": return simpleRatingText(ratings, "Rating_IRC", 3);
+    case "HPR": return simpleRatingText(ratings, "Rating_HPR", 4);
+    case "CRFMkII": return simpleRatingText(ratings, "Rating_CRF", 1);
+    case "ORC": {
+      const aphd = findRating(ratings, "Rating_ORC_APHD")?.value;
+      const gph = findRating(ratings, "Rating_ORC_GPH")?.value;
+      const parts = [aphd, gph].filter(v => v != null).map(v => fmtNum(v, 1));
+      return parts.length ? parts.join(" / ") : null;
+    }
+    case "ORR": return simpleRatingText(ratings, "Rating_ORR_GPH", 1);
+    case "ORRez": return simpleRatingText(ratings, "ORRez_GPH_ToD", 1);
+    case "Transpac": return simpleRatingText(ratings, "Rating_CSA", 4);
+    case "CSA": return simpleRatingText(ratings, "Rating_CSA", 4);
+    case "GLMRA": return simpleRatingText(ratings, "Rating_GLMRA", 4);
+    case "ToT": {
+      const v = findRating(ratings, "Rating_ToT")?.value ?? findRating(ratings, "Rating_PHRF")?.value;
+      return v != null ? String(v) : null;
+    }
+    case "Portsmouth": return simpleRatingText(ratings, "Rating_Ports_Base", 1);
+    default: return null;
+  }
+}
+function ratingLabel(division){ return DIVISION_LABEL[division] || division || "Rating"; }
+
+function homePort(owner){
+  const bits = [];
+  if (owner.city) bits.push(owner.city);
+  if (owner.state) bits.push(owner.state);
+  if (owner.country && owner.country !== "United States of America") bits.push(owner.country);
+  return bits.join(", ");
+}
+
+// A length string that already carries its own feet/inches notation (a letter
+// or prime/quote mark) is shown as-is; a bare number gets the unit appended.
+const HAS_OWN_UNIT = /[A-Za-z'"’”′″]/;
+function formatLength(length, unit){
+  if (!length) return "";
+  if (HAS_OWN_UNIT.test(length)) return length;
+  return `${length} ${unit || ""}`.trim();
+}
+
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ---------- transform the raw API response into the render model ---------- */
+function transformApiResponse(json){
+  const areas = (json.data || []).map(circle => ({
+    name: circle.splitCircle,
+    classes: (circle.splitClasses || []).map(cls => ({
+      startSequence: cls.startSequence,
+      className: cls.splitClassName,
+      division: cls.splitDivision,
+      ratingLabel: ratingLabel(cls.splitDivision),
+      flag: cls.classFlag,
+      boats: (cls.eventBoats || []).map(b => ({
+        sail: [b.sailPrefix, b.sailNumber].filter(Boolean).join(" "),
+        sailNumberRaw: b.sailNumber || "", // for numeric sort — see sailSortKey()
+        name: b.name + (b.isCorinthianTeam ? " (Corinthian)" : ""),
+        type: b.design || "",
+        length: formatLength(b.length, b.lengthUnit),
+        owner: [b.owner?.firstName, b.owner?.lastName].filter(Boolean).join(" "),
+        club: b.owner?.club || "",
+        port: homePort(b.owner || {}),
+        crewCount: (b.crewNames || []).length,
+        rating: ratingText(cls.splitDivision, b.ratings || [], b.isRatingApproved),
+      })),
+    })),
+  }));
+
+  let eventInfo = {};
+  outer: for (const circle of json.data || []) {
+    for (const cls of circle.splitClasses || []) {
+      for (const b of cls.eventBoats || []) { eventInfo = b.eventInfo || {}; break outer; }
+    }
+  }
+  return { event: eventInfo, areas };
+}
+
+/* ---------- render ---------- */
+function renderBoatRow(b, i){
+  const rating = b.rating
+    ? `<span>${esc(b.rating)}</span>`
+    : `<span class="rate-pending">Pending</span>`;
+  return `
+      <tr class="boat-row">
+        <td class="check"><span class="arrival-box"></span></td>
+        <td class="num">${i + 1}</td>
+        <td class="sail">${esc(b.sail)}</td>
+        <td class="name">${esc(b.name)}</td>
+        <td class="type">${esc(b.type)}</td>
+        <td class="loa">${esc(b.length)}</td>
+        <td class="owner">${esc(b.owner)}<span class="crew">${b.crewCount} crew</span></td>
+        <td class="club">${esc(b.club)}</td>
+        <td class="port">${esc(b.port)}</td>
+        <td class="rate">${rating}</td>
+      </tr>`;
+}
+
+// Each class renders as its own <tbody> — the atomic unit pagination is built around.
+function renderClassBody(cls){
+  const divColor = DIVISION_COLOR[cls.division] || "var(--ink-soft)";
+  const flagSrc = FLAG_PNG[cls.flag] || "";
+  return `
+    <tbody>
+      <tr class="class-row">
+        <td colspan="10">
+          <div class="class-bar">
+            ${flagSrc ? `<img class="flag-img" src="${flagSrc}" alt="Class flag ${esc(cls.flag)}">` : ""}
+            <div class="titles">
+              <div class="cname">${esc(cls.className)}</div>
+              <div class="csub">Start ${cls.startSequence} &nbsp;·&nbsp; Flag &ldquo;${esc(cls.flag)}&rdquo;</div>
+            </div>
+            <div class="division-pill" style="color:${divColor}">${esc(cls.ratingLabel)}</div>
+            <div class="boat-count">${cls.boats.length} boat${cls.boats.length === 1 ? "" : "s"}</div>
+          </div>
+        </td>
+      </tr>${cls.boats.map(renderBoatRow).join("")}
+    </tbody>`;
+}
+
+function renderArea(area){
+  const boatCount = area.classes.reduce((n, c) => n + c.boats.length, 0);
+  return `
+    <section class="area">
+      <div class="area-band">
+        <span>Racing Area — ${esc(area.name)}</span>
+        <span class="tag">${area.classes.length} class${area.classes.length === 1 ? "" : "es"} · ${boatCount} boat${boatCount === 1 ? "" : "s"}</span>
+      </div>
+      <table class="roster">
+        <colgroup>
+          <col class="c-check"><col class="c-num"><col class="c-sail"><col class="c-name"><col class="c-type">
+          <col class="c-loa"><col class="c-owner"><col class="c-club"><col class="c-port"><col class="c-rate">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="check">✓</th>
+            <th class="num">#</th>
+            <th>Sail No.</th>
+            <th>Yacht Name</th>
+            <th>Yacht Type</th>
+            <th class="right">Length</th>
+            <th>Owner / Skipper</th>
+            <th>Yacht Club</th>
+            <th>Home Port</th>
+            <th>Rating</th>
+          </tr>
+        </thead>
+        ${area.classes.map(renderClassBody).join("")}
+      </table>
+    </section>`;
+}
+
+/* ---------- flat view: one list, sorted by sail number ---------- */
+// The site stores prefix ("USA") and number ("60141") as separate fields,
+// but not every entry is clean — e.g. this event has "5598T" (a trailing
+// letter), "RP 45" (letters mid-number), and a couple of boats where the
+// whole "USA 1543" string landed in the number field with no prefix at
+// all. Pulling out whatever digits exist, wherever they are, sorts all of
+// them sensibly without needing a strict "first three characters" split.
+function sailSortKey(sailNumberRaw){
+  const digits = String(sailNumberRaw || "").replace(/\D+/g, "");
+  return digits ? parseInt(digits, 10) : Number.POSITIVE_INFINITY;
+}
+
+function flattenBoats(model){
+  const rows = [];
+  for (const area of model.areas){
+    for (const cls of area.classes){
+      for (const b of cls.boats){
+        rows.push({ ...b, startSequence: cls.startSequence, flag: cls.flag });
+      }
+    }
+  }
+  return rows.sort((a, b) => sailSortKey(a.sailNumberRaw) - sailSortKey(b.sailNumberRaw));
+}
+
+function renderFlatRow(b, i){
+  const rating = b.rating
+    ? `<span>${esc(b.rating)}</span>`
+    : `<span class="rate-pending">Pending</span>`;
+  const flagSrc = FLAG_PNG[b.flag] || "";
+  return `
+      <tr class="boat-row">
+        <td class="check"><span class="arrival-box"></span></td>
+        <td class="num">${i + 1}</td>
+        <td class="sail">${esc(b.sail)}</td>
+        <td class="flagcell">${flagSrc ? `<img class="flag-img" src="${flagSrc}" alt="Flag ${esc(b.flag)}">` : ""}</td>
+        <td class="startnum">${esc(b.startSequence)}</td>
+        <td class="name">${esc(b.name)}</td>
+        <td class="type">${esc(b.type)}</td>
+        <td class="loa">${esc(b.length)}</td>
+        <td class="owner">${esc(b.owner)}<span class="crew">${b.crewCount} crew</span></td>
+        <td class="club">${esc(b.club)}</td>
+        <td class="port">${esc(b.port)}</td>
+        <td class="rate">${rating}</td>
+      </tr>`;
+}
+
+function renderFlatTable(model){
+  const boats = flattenBoats(model);
+  if (!boats.length) return "";
+  return `
+    <table class="roster flat-roster">
+      <colgroup>
+        <col class="f-check"><col class="f-num"><col class="f-sail"><col class="f-flag"><col class="f-start">
+        <col class="f-name"><col class="f-type"><col class="f-loa"><col class="f-owner"><col class="f-club"><col class="f-port"><col class="f-rate">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="check">✓</th>
+          <th class="num">#</th>
+          <th>Sail No.</th>
+          <th class="num">Flag</th>
+          <th class="num">Start</th>
+          <th>Yacht Name</th>
+          <th>Yacht Type</th>
+          <th class="right">Length</th>
+          <th>Owner / Skipper</th>
+          <th>Yacht Club</th>
+          <th>Home Port</th>
+          <th>Rating</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${boats.map(renderFlatRow).join("")}
+      </tbody>
+    </table>`;
+}
+
+function renderModel(model){
+  document.getElementById("event-name").textContent = model.event.name || "Scratch Sheet";
+  const startDate = model.event.startDate ? new Date(model.event.startDate) : null;
+  const dateText = startDate && !isNaN(startDate)
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeZone: "UTC" }).format(startDate)
+    : null;
+  document.getElementById("event-subtitle").textContent =
+    "Scratch Sheet" + (dateText ? ` · ${dateText}` : "");
+
+  const areasEl = document.getElementById("areas");
+  const flatWrapEl = document.getElementById("flat-table-wrap");
+  const emptyEl = document.getElementById("empty-state");
+  if (!model.areas.length){
+    areasEl.innerHTML = "";
+    flatWrapEl.innerHTML = "";
+    emptyEl.textContent = "No classes or entries were found for this event.";
+    emptyEl.style.display = "";
+  } else {
+    areasEl.innerHTML = model.areas.map(renderArea).join("");
+    flatWrapEl.innerHTML = renderFlatTable(model);
+    emptyEl.style.display = "none";
+  }
+
+  const totalBoats = model.areas.reduce((n, a) => n + a.classes.reduce((m, c) => m + c.boats.length, 0), 0);
+  const totalClasses = model.areas.reduce((n, a) => n + a.classes.length, 0);
+  document.getElementById("boat-total").textContent = totalBoats;
+  document.getElementById("area-total").textContent = model.areas.length;
+  document.getElementById("class-total").textContent = totalClasses;
+  document.getElementById("print-btn").disabled = totalBoats === 0;
+  document.getElementById("csv-btn").disabled = totalBoats === 0;
+
+  document.querySelectorAll("[data-legend-flag]").forEach(img => {
+    img.src = FLAG_PNG[img.dataset.legendFlag] || "";
+  });
+}
+
+/* ================================================================
+   Pagination — walk the rendered document in the same units the
+   printed page uses (the .sheet is fixed to the printable content
+   width, 7.4in, so measured heights match the printed layout) and
+   mark exactly where a class or a racing-area opener would overflow
+   a letter page's 10in usable height, forcing it onto a fresh page.
+   A class (one <tbody>) is never split; a racing-area band is kept
+   glued to its first class so a lone header never strands itself
+   at the bottom of a page.
+   ================================================================ */
+function pxPerInch(){
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;height:1in;width:0;";
+  document.body.appendChild(probe);
+  const px = probe.getBoundingClientRect().height;
+  probe.remove();
+  return px || 96;
+}
+
+function paginate(){
+  document.querySelectorAll(".force-break").forEach(el => el.classList.remove("force-break"));
+  document.querySelectorAll(".page-break-marker").forEach(el => el.remove());
+
+  const pageContentH = 10 * pxPerInch(); // matches @page's 11in - 0.5in - 0.5in
+
+  const mastheadEl = document.querySelector(".masthead");
+  const mastheadStyle = getComputedStyle(mastheadEl);
+  let used = mastheadEl.getBoundingClientRect().height + parseFloat(mastheadStyle.marginBottom || "0");
+
+  document.querySelectorAll("#areas > .area").forEach(areaEl => {
+    const bandEl = areaEl.querySelector(".area-band");
+    const table = areaEl.querySelector("table.roster");
+    const theadEl = table.querySelector("thead");
+    const bandH = bandEl.getBoundingClientRect().height;
+    const theadH = theadEl.getBoundingClientRect().height;
+
+    [...table.querySelectorAll("tbody")].forEach((tb, idx) => {
+      const tbH = tb.getBoundingClientRect().height;
+      if (idx === 0){
+        const combined = bandH + theadH + tbH;
+        if (used + combined > pageContentH){
+          areaEl.classList.add("force-break");
+          areaEl.insertAdjacentHTML("beforebegin", '<div class="page-break-marker no-print">Page break — new page starts here</div>');
+          used = combined;
+        } else {
+          used += combined;
+        }
+      } else if (used + tbH > pageContentH){
+        tb.classList.add("force-break");
+        used = theadH + tbH; // the table's <thead> repeats natively at the top of the new page
+      } else {
+        used += tbH;
+      }
+    });
+  });
+}
+
+/* ---------- fetch + wire-up ---------- */
+function setStatus(kind, text){
+  const el = document.getElementById("status-line");
+  el.className = "status-line no-print" + (kind ? ` is-${kind}` : "");
+  el.textContent = text || "";
+}
+
+async function loadEvent(id){
+  const loadBtn = document.getElementById("load-btn");
+  const emptyEl = document.getElementById("empty-state");
+  loadBtn.disabled = true;
+  setStatus("loading", "Loading…");
+  emptyEl.style.display = "none";
+  try {
+    // grouping=class is required — without it the API groups by division first
+    // (a differently-shaped response) instead of returning classes directly.
+    const SORT = "split.splitCircle.asc,split.startSequence.asc,split.splitDivision.asc,split.splitClass.asc,split.splitClassName.asc,name.asc,id.asc";
+    const params = new URLSearchParams({ sort: SORT, includeSubclass: "false", grouping: "class" });
+    const res = await fetch(`https://api.yachtscoring.com/v1/public/event/${encodeURIComponent(id)}/scratch-sheet?${params}`);
+    const json = await res.json().catch(() => null);
+    if (!res.ok){
+      throw new Error((json && json.message) || `Request failed (HTTP ${res.status})`);
+    }
+    if (!json || !Array.isArray(json.data)){
+      throw new Error("Unexpected response shape from YachtScoring.");
+    }
+    const model = transformApiResponse(json);
+    currentModel = model;
+    currentRaceId = id;
+    renderModel(model);
+    document.getElementById("source-note").innerHTML =
+      `sample: <a href="https://yachtscoring.com/event_scratch_sheet/${esc(id)}" target="_blank" rel="noopener">yachtscoring.com/event_scratch_sheet/${esc(id)}</a>.`;
+    setStatus("", "");
+    await (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve());
+    // Two ticks: let the browser finish layout/webfont swap before measuring.
+    requestAnimationFrame(() => requestAnimationFrame(paginate));
+  } catch (err){
+    setStatus("error", `Couldn't load Race ID ${id}: ${err.message}`);
+    if (!document.getElementById("areas").children.length){
+      emptyEl.textContent = "Couldn't load that race. Check the Race ID and try again.";
+      emptyEl.style.display = "";
+    }
+  } finally {
+    loadBtn.disabled = false;
+  }
+}
+
+/* ---------- CSV export ---------- */
+// A racing area/class only appears once as a group header on the printed
+// page, so a flat CSV repeats that context onto every boat's own row —
+// each row is then a complete, independent record for a spreadsheet.
+const CSV_HEADER = ["Racing Area","Start","Class","Division","Flag","Sail No","Yacht Name","Yacht Type","Length","Owner/Skipper","Crew Count","Yacht Club","Home Port","Rating"];
+
+function csvField(v){
+  const s = String(v ?? "");
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function buildCsv(model){
+  const rows = [CSV_HEADER];
+  for (const area of model.areas){
+    for (const cls of area.classes){
+      for (const b of cls.boats){
+        rows.push([
+          area.name, cls.startSequence, cls.className, cls.division, cls.flag,
+          b.sail, b.name, b.type, b.length, b.owner, b.crewCount, b.club, b.port,
+          b.rating ?? "Pending",
+        ]);
+      }
+    }
+  }
+  return rows.map(r => r.map(csvField).join(",")).join("\r\n");
+}
+
+function downloadCsv(){
+  if (!currentModel || !currentModel.areas.length) return;
+  const csv = "﻿" + buildCsv(currentModel); // BOM so Excel reads UTF-8 (accents, curly quotes) correctly
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const slug = (currentModel.event.name || "scratch-sheet").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const raceIdPart = currentRaceId ? `-${currentRaceId}` : "";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${slug || "scratch-sheet"}${raceIdPart}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById("csv-btn").addEventListener("click", downloadCsv);
+
+/* ---------- view toggle ---------- */
+function setView(view){
+  const sheetRoot = document.getElementById("sheet-root");
+  sheetRoot.dataset.view = view;
+  document.getElementById("view-grouped-btn").setAttribute("aria-pressed", String(view === "grouped"));
+  document.getElementById("view-flat-btn").setAttribute("aria-pressed", String(view === "flat"));
+  // the grouped view's pagination depends on layout that only exists while
+  // it's actually visible, so (re)compute it each time it's switched in
+  if (view === "grouped") requestAnimationFrame(() => requestAnimationFrame(paginate));
+}
+document.getElementById("view-grouped-btn").addEventListener("click", () => setView("grouped"));
+document.getElementById("view-flat-btn").addEventListener("click", () => setView("flat"));
+
+document.getElementById("loader-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const id = document.getElementById("race-id").value.trim();
+  if (!/^\d+$/.test(id)){
+    setStatus("error", "Race ID should be numeric — e.g. 50775.");
+    return;
+  }
+  loadEvent(id);
+});
+
+window.addEventListener("beforeprint", () => {
+  if (document.getElementById("sheet-root").dataset.view === "grouped") paginate();
+});
+window.addEventListener("load", () => loadEvent(document.getElementById("race-id").value.trim()));
+</script>
