@@ -38,7 +38,12 @@
   }
 
   .sheet{
-    max-width:calc(var(--page-content-w) + 44px);
+    /* fixed, not max — a max-width lets the browser's own scrollbar (and,
+       apparently, viewport state at beforeprint time) shrink the measured
+       width below the true printed page width, which throws off every row
+       height the pagination math below depends on. A fixed width can't be
+       shrunk by either, so screen and print always measure identically. */
+    width:calc(var(--page-content-w) + 44px);
     margin:0 auto;
     padding:28px 22px 60px;
     background:var(--paper);
@@ -241,11 +246,11 @@
     gap:14px;
     background:var(--band);
     color:#fff;
-    padding:8px 14px;
+    padding:5px 14px;
     font-family:var(--font-display);
     text-transform:uppercase;
     letter-spacing:.04em;
-    font-size:14px;
+    font-size:10.5px;
     font-weight:500;
   }
   .area-band .tag{ opacity:.65; font-size:10.5px; letter-spacing:.03em; }
@@ -270,25 +275,26 @@
   }
   /* Fixed columns (check/num/sail/loa/rate) total 308px — rate is sized for a
      two-value ORC rating ("489.3 / 548.5") so it never overflows past the
-     printable margin. The rest — name/type/owner/club/port — are percentages
-     of the table's own width, not of the leftover space, so they're scaled
-     to the ~57% that actually fits what remains of the 7.4in printable
-     width (710px - 308px = 402px). */
+     printable margin. Home Port is dropped and Owner/Skipper widened
+     accordingly (a page-count reduction: fewer columns competing for width
+     means fewer wrapped owner lines). The rest — name/type/owner/club —
+     are percentages of the table's own width, not of the leftover space,
+     so they're scaled to the ~59% that actually fits what remains of the
+     7.4in printable width (710px - 294px = 416px). */
   table.roster col.c-check { width:26px; }
   table.roster col.c-num   { width:24px; }
-  table.roster col.c-sail  { width:98px; }
-  table.roster col.c-name  { width:13%; }
+  table.roster col.c-sail  { width:84px; }
+  table.roster col.c-name  { width:15%; }
   table.roster col.c-type  { width:10%; }
   table.roster col.c-loa   { width:60px; }
-  table.roster col.c-owner { width:13%; }
+  table.roster col.c-owner { width:22%; }
   table.roster col.c-club  { width:12%; }
-  table.roster col.c-port  { width:9%; }
   table.roster col.c-rate  { width:100px; }
 
-  /* Flat (sail-number-sorted) table: checkbox+#+sail+flag+start are fixed
-     px, loa/rate as before, name/type/owner/club/port scaled to the ~46%
-     of the 7.4in printable width (710px) left over after the fixed columns
-     (26+24+90+40+40+60+100 = 380px; 710-380=330px → 46%). */
+  /* Flat (sail-number-sorted) table: checkbox+#+sail+flag+start+loa+rate are
+     fixed px (382px total); Home Port is dropped and Owner/Skipper widened
+     accordingly, same as the grouped report. name/type/owner/club scaled to
+     the ~46% of the 7.4in printable width (710px) left over. */
   table.roster col.f-check { width:26px; }
   table.roster col.f-num   { width:32px; } /* wider than the grouped table's — this list runs 1-82, not 1-10 */
   table.roster col.f-sail  { width:84px; }
@@ -297,9 +303,8 @@
   table.roster col.f-name  { width:11%; }
   table.roster col.f-type  { width:7%; }
   table.roster col.f-loa   { width:60px; }
-  table.roster col.f-owner { width:11%; }
+  table.roster col.f-owner { width:18%; }
   table.roster col.f-club  { width:10%; }
-  table.roster col.f-port  { width:7%; }
   table.roster col.f-rate  { width:100px; }
 
   table.roster thead{ display:table-header-group; }
@@ -333,9 +338,9 @@
   .class-bar{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:8px;
     background:var(--class-fill);
-    padding:5px 8px;
+    padding:3px 8px;
     border-top:1px solid var(--paper-line);
     border-bottom:1px solid var(--paper-line);
   }
@@ -348,20 +353,21 @@
     border:1px solid var(--ink-faint);
     background:#fff;
   }
+  .class-bar .flag-img{ height:19px; } /* grouped report only — class-bar isn't used in the flat view */
   .class-bar .titles{ flex:1 1 auto; min-width:0; }
   .class-bar .cname{
     font-family:var(--font-display);
-    font-size:13px;
+    font-size:12px;
     font-weight:500;
     color:var(--ink);
     letter-spacing:.01em;
   }
   .class-bar .csub{
-    font-size:9.5px;
+    font-size:8.5px;
     color:var(--ink-faint);
     text-transform:uppercase;
     letter-spacing:.045em;
-    margin-top:1px;
+    margin-top:0;
   }
   .class-bar .division-pill{
     flex:none;
@@ -399,18 +405,25 @@
     margin:0 auto;
   }
   td.num{ text-align:center; color:var(--ink-faint); font-family:var(--font-mono); white-space:nowrap; }
-  td.sail{ font-family:var(--font-mono); font-weight:600; font-size:14.5px; letter-spacing:.01em; }
+  td.sail{ font-family:var(--font-mono); font-weight:600; font-size:12px; letter-spacing:.01em; }
+  /* density pass for page count — shared by both reports */
+  table.roster{ font-size:10.5px; }
+  table.roster thead th{ padding:5px 8px 4px; }
+  table.roster tr.boat-row td{ padding:4px 8px; line-height:1.25; }
   td.name{ font-weight:600; }
   td.type{ color:var(--ink-soft); }
   td.loa{ font-family:var(--font-mono); color:var(--ink-soft); }
-  td.owner .crew{
-    display:block;
-    font-size:9.5px;
-    color:var(--ink-faint);
-    margin-top:1px;
-    font-family:var(--font-body);
+  td.club{ color:var(--ink-soft); }
+  /* clamp Yacht Club to 2 lines — some sailors list several club memberships
+     ("Storm Trysail Club / American Yacht Club / New York Yacht Club / ...")
+     which otherwise runs the row to 4+ lines; cut with an ellipsis instead */
+  .club-text{
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
-  td.club, td.port{ color:var(--ink-soft); }
   td.rate{ font-family:var(--font-mono); font-weight:500; }
   .rate-pending{
     font-family:var(--font-body);
@@ -454,7 +467,12 @@
 
   @media print{
     body{ background:#fff; }
-    .sheet{ max-width:none; padding:0; }
+    /* Fixed (not max-) width: at beforeprint, the browser hasn't resized its
+       render viewport to the physical page yet, so window/.sheet's width
+       would otherwise reflect the on-screen browser window (~754px) rather
+       than the true 7.4in printed content width — understating text wrap
+       and thus row height, and throwing off the pagination math below. */
+    .sheet{ width:var(--page-content-w); max-width:none; padding:0; }
     .no-print{ display:none !important; }
     .page-break-marker{ display:none; }
     tbody.force-break > tr.class-row .class-bar{ border-top:none; }
@@ -511,11 +529,11 @@
   <div class="empty-state no-print" id="empty-state">Enter a Race ID above and click Load.</div>
 
   <footer class="note">
-    <span class="note-grouped">Column order: ✓ · # · Sail No. · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Home Port · Rating.
+    <span class="note-grouped">Column order: ✓ · # · Sail No. · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Rating.
     Each class is paginated as a single unbreakable block so no class is ever split across a printed page.</span>
-    <span class="note-flat">Column order: ✓ · # · Sail No. · Flag · Start · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Home Port · Rating.
+    <span class="note-flat">Column order: ✓ · # · Sail No. · Flag · Start · Yacht Name · Yacht Type · Length · Owner/Skipper · Yacht Club · Rating.
     Sail numbers are sorted on the digits parsed out of the source registration (a few entries — mixed formats like "5598T" or "RP 45" — sort on whichever digits they contain).</span>
-    Crew count shown under the owner's name for check-in verification. Start-sequence flags are the actual
+    Home Port and crew count are both still in the CSV export, just dropped from the printed columns above. Start-sequence flags are the actual
     numeral/letter-pennant PNGs embedded on the source page — <span id="source-note"></span>
   </footer>
 
@@ -723,9 +741,8 @@ function renderBoatRow(b, i){
         <td class="name">${esc(b.name)}</td>
         <td class="type">${esc(b.type)}</td>
         <td class="loa">${esc(b.length)}</td>
-        <td class="owner">${esc(b.owner)}<span class="crew">${b.crewCount} crew</span></td>
-        <td class="club">${esc(b.club)}</td>
-        <td class="port">${esc(b.port)}</td>
+        <td class="owner">${esc(b.owner)}</td>
+        <td class="club"><span class="club-text">${esc(b.club)}</span></td>
         <td class="rate">${rating}</td>
       </tr>`;
 }
@@ -737,7 +754,7 @@ function renderClassBody(cls){
   return `
     <tbody>
       <tr class="class-row">
-        <td colspan="10">
+        <td colspan="9">
           <div class="class-bar">
             ${flagSrc ? `<img class="flag-img" src="${flagSrc}" alt="Class flag ${esc(cls.flag)}">` : ""}
             <div class="titles">
@@ -763,7 +780,7 @@ function renderArea(area){
       <table class="roster">
         <colgroup>
           <col class="c-check"><col class="c-num"><col class="c-sail"><col class="c-name"><col class="c-type">
-          <col class="c-loa"><col class="c-owner"><col class="c-club"><col class="c-port"><col class="c-rate">
+          <col class="c-loa"><col class="c-owner"><col class="c-club"><col class="c-rate">
         </colgroup>
         <thead>
           <tr>
@@ -775,7 +792,6 @@ function renderArea(area){
             <th class="right">Length</th>
             <th>Owner / Skipper</th>
             <th>Yacht Club</th>
-            <th>Home Port</th>
             <th>Rating</th>
           </tr>
         </thead>
@@ -823,9 +839,8 @@ function renderFlatRow(b, i){
         <td class="name">${esc(b.name)}</td>
         <td class="type">${esc(b.type)}</td>
         <td class="loa">${esc(b.length)}</td>
-        <td class="owner">${esc(b.owner)}<span class="crew">${b.crewCount} crew</span></td>
-        <td class="club">${esc(b.club)}</td>
-        <td class="port">${esc(b.port)}</td>
+        <td class="owner">${esc(b.owner)}</td>
+        <td class="club"><span class="club-text">${esc(b.club)}</span></td>
         <td class="rate">${rating}</td>
       </tr>`;
 }
@@ -837,7 +852,7 @@ function renderFlatTable(model){
     <table class="roster flat-roster">
       <colgroup>
         <col class="f-check"><col class="f-num"><col class="f-sail"><col class="f-flag"><col class="f-start">
-        <col class="f-name"><col class="f-type"><col class="f-loa"><col class="f-owner"><col class="f-club"><col class="f-port"><col class="f-rate">
+        <col class="f-name"><col class="f-type"><col class="f-loa"><col class="f-owner"><col class="f-club"><col class="f-rate">
       </colgroup>
       <thead>
         <tr>
@@ -851,7 +866,6 @@ function renderFlatTable(model){
           <th class="right">Length</th>
           <th>Owner / Skipper</th>
           <th>Yacht Club</th>
-          <th>Home Port</th>
           <th>Rating</th>
         </tr>
       </thead>
@@ -920,7 +934,16 @@ function paginate(){
   document.querySelectorAll(".force-break").forEach(el => el.classList.remove("force-break"));
   document.querySelectorAll(".page-break-marker").forEach(el => el.remove());
 
-  const pageContentH = 10 * pxPerInch(); // matches @page's 11in - 0.5in - 0.5in
+  // A small safety margin: the browser's actual print rasterizer measures
+  // rows very slightly taller than this screen-side JS pass does (observed
+  // ~2-3% cumulative drift over a page's worth of rows — likely print vs.
+  // screen font hinting/rounding). Without slack, that drift can push a
+  // class past the real page edge that this pass thought would still fit,
+  // triggering an unplanned natural break-inside:avoid — which strands that
+  // class alone on a page, since the already-computed force-break after it
+  // doesn't know to cancel itself now that there's room after all.
+  const PAGE_SAFETY_MARGIN = 48; // ~0.5in
+  const pageContentH = 10 * pxPerInch() - PAGE_SAFETY_MARGIN; // matches @page's 11in - 0.5in - 0.5in, minus the margin above
 
   const mastheadEl = document.querySelector(".masthead");
   const mastheadStyle = getComputedStyle(mastheadEl);
